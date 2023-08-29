@@ -1,3 +1,5 @@
+
+
 # 💸 Stock-Box
 ><b>국내 실시간 주식 조회 및 모의 투자 서비스</b>
 >
@@ -41,40 +43,104 @@
 </br>
 
 ## 5. 맡았던 핵심 기능
-### 5.1. 누리집 Open API를 활용한 주식 데이터 저장 및 관리
-기존 프론트 서버에서 누리집 Open API를 호출하였음. CORS에러가 발생하지 않았기 때문.   
-그러나 성능 상의 이슈(밑에 핵심트러블 링크걸기) 때문에, 백엔드 서버에서 호출하기로 결정.   
-매일 주기적으로 호출하여 데이터를 받아오고, DB에 저장.
-저장된 데이터는 주기적으로 호출되기 전에 삭제된 후 저장되도록 구현.   
+### 5.1. 프록시 서버처럼 한국투자증권, 네이버 디밸로퍼 Open API를 호출
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
+
+한국투자증권 API는 상세 주식 정보 데이터를, 네이버 디밸로퍼 API는 증권 관련 뉴스 데이터를 위해 사용됩니다.
+
+기존에 프론트 서버에서 자체 프록시 서버를 통해 외부 API를 호출하는 방식을 이용했습니다.   
+이후 백엔드 서버에서 외부 API를 호출한 후, 그 데이터를 프론트로 응답해주는 방식으로 변경하였습니다.   
+
+개선된 호출 흐름은 다음과 같습니다.
+
+1. 프론트 측에서 Open API에서 필요한 데이터를 백엔드 서버로 요청합니다.
+2. 백엔드 서버에서 Open API의 서버로 요청을 한 후, 데이터를 받아옵니다.
+3. 받아온 데이터를 프론트 측에 내려줍니다.
+
+이 과정 속에서 백엔드 서버는 단순 중계 서버 형태의 **프록시 서버 역할**을 합니다.   
+(위의 **전체 흐름** 그림을 보시면 흐름을 파악하실 수 있습니다.)
+
+외부 API를 호출하기 위한 Secret Key 노출 등과 같은 보안 위협을 방지하고, 프론트엔드는 사용자 경험과 UI에 더욱 집중할 수 있게 되었습니다.
+
+📌 [DetailedStockController.java](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/controller/DetailedStockController.java)   
+📌 [DetailedStockService.java](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/service/DetailedStockService.java)
+
 </div>
 </details>
 
 </br>
 
-### 5.2. 프록시 형태의 한국투자증권, 네이버 디밸로퍼 Open API를 호출
-기존 프론트 서버에서 프록시 서버를 통해 한국투자증권, 네이버 디벨로퍼 open api를 호출했었음.   
-이 과정을 백엔드 서버에서 위임하여 처리하도록 구성함.   
-프론트엔드는 백엔드 서버에 필요한 정보만 요청하면 백엔드 서버는 프록시 서버의 형태로 open api를 호출하고 데이터를 가공하여 응답내려주는 방식으로 재구현함.
+### 5.2. 누리집 Open API를 활용한 주식 데이터 저장 및 관리
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
+
+  Spring RestTemplate를 활용하여 누리집 Open API를 호출하였습니다.   
+
+누리집의 데이터는 전체 주식 종목 리스트를 조회하기 위해 필요한 데이터입니다.   
+데이터들은 매일 오전 11시에 업데이트되기 때문에, 다음과 같이 Spring Scheduler를 통해 주기적으로 호출해서 데이터를 받아오도록 구현했습니다.
+
+```Java
+@PostConstruct
+@Scheduled(cron = "15 5 11 * * *", zone = "Asia/Seoul")  // 매일 오전 11시 5분 15초에 주식시세정보 데이터 불러옴
+public void getAndSaveKOSDAQStockIndex() {
+
+    String url = STOCK_DEFAULT_URL + "/getStockMarketIndex";
+
+    ...
+```
+
+📌 [원본 코드](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/overall/save/SaveKOSDAQStockIndex.java)
+
+매일 받아오는 데이터의 수는 상당히 많기 때문에, 불러오기 이전에 DB에 저장된 데이터를 삭제할 수 있도록 했습니다.
+
+```Java
+// 매일 오전 11시 5분에 DB에 있는 주식시세정보 데이터 삭제
+@Scheduled(cron = "0 5 11 * * *", zone = "Asia/Seoul")
+public void deleteKOSPIStockList() {
+    kosdaqStockIndexRepository.deleteAll();
+}
+```
+
+코스닥, 코스피별로 지수정보, 시세정보를 불러오기 위한 총 4개의 비즈니스 로직을 작성했습니다.   
+해당 [Save 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/stock/overall/save) 안의 클래스들은 모두 위 정보들을 불러오기 위한 누리집 Open API 호출과 관련된 로직들이 존재합니다.
+
 </div>
 </details>
 
 </br>
 
-### 5.3. 주식 종목 북마크 기능 구현
+### 5.3. 모의 투자 기능 구현
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
+
+처음 유저가 가입하면 모의투자 연습을 위한 기본금으로 1000만원이 주어집니다.  
+
+특정 주식의 사용자 UI에서 **매수** 버튼을 누르면 **BUY** / **매도** 버튼을 누르면 **SELL**의 타입으로 거래를 생성합니다.   
+📌 [매수, 매도 관련 Controller 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/controller/TradeController.java#L29C5-L35C6)
+
+이미 해당 주식 종목을 갖고 있는지 확인하고, 금액은 충분한지 등의 여러 조건들을 거쳐 거래가 처리됩니다.   
+📌 [매수, 매도 관련 Servicea 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/service/TradeService.java#L26C5-L82C6)
+
+돈 거래이기 때문에, Java에서 숫자를 정밀하게 저장하고 표현할 수 있는 **BigDecimal** 타입을 사용했습니다.   
+Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 투자 기록 조회 기능도 포함하기 위함입니다.   
+
+모의 투자 기능을 급하게 맡아서 구현했던 상황이었기 때문에, 불필요한 로직이 많고 가독성이 좋지 못합니다.   
+추후 회고에서 다룰 부분이기도 합니다.   
+
 </div>
 </details>
+
+</br>
+
+### 5.4. 주식 종목 북마크 CRUD 기능 구현
+📌 [북마크 관련 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/bookmark)
 
 </br>
 
