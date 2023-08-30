@@ -1,4 +1,3 @@
-
 # 💸 Stock-Box
 ><b>국내 실시간 주식 조회 및 모의 투자 서비스</b>
 >
@@ -25,7 +24,7 @@
 </br>
 
 ## 3. ERD 설계
-<img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/929dcc70-8ae0-441d-a554-996cde977dd0" width=800 height=400>
+<img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/929dcc70-8ae0-441d-a554-996cde977dd0" width= 1200 height=600>
 
 </br>
 </br>
@@ -58,6 +57,8 @@
 <summary>상세 설명</summary>
 <div markdown="1">
 
+</br>
+
 한국투자증권 API는 상세 주식 정보 데이터를, 네이버 디밸로퍼 API는 증권 관련 뉴스 데이터를 위해 사용됩니다.
 
 기존에 프론트 서버에서 자체 프록시 서버를 통해 외부 API를 호출하는 방식을 이용했습니다.   
@@ -80,15 +81,15 @@
 </div>
 </details>
 
-</br>
-
 ### 5.2. 누리집 Open API를 활용한 주식 데이터 저장 및 관리
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
 
-  Spring RestTemplate를 활용하여 누리집 Open API를 호출하였습니다.   
+</br>
+
+Spring RestTemplate를 활용하여 누리집 Open API를 호출하였습니다.   
 
 누리집의 데이터는 전체 주식 종목 리스트를 조회하기 위해 필요한 데이터입니다.   
 데이터들은 매일 오전 11시에 업데이트되기 때문에, 다음과 같이 Spring Scheduler를 통해 주기적으로 호출해서 데이터를 받아오도록 구현했습니다.
@@ -121,13 +122,13 @@ public void deleteKOSPIStockList() {
 </div>
 </details>
 
-</br>
-
 ### 5.3. 모의 투자 기능 구현
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
+
+</br>
 
 처음 유저가 가입하면 모의투자 연습을 위한 기본금으로 1000만원이 주어집니다.  
 
@@ -145,8 +146,6 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 
 </div>
 </details>
-
-</br>
 
 ### 5.4. 주식 종목 북마크 CRUD 기능 구현
 📌 [북마크 관련 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/bookmark)
@@ -182,26 +181,213 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 </br>
 
 ## 7. 그 외 트러블 슈팅
-- <details>
-<summary>외부 Open API 호출 시, yml 파일의 Service Key를 받아오지 못하고 null 값이 되는 문제</summary>
+<details>
+<summary>yml 파일의 환경 변수를 불러오지 못하고 null 값이 되는 문제</summary>
 <div markdown="1">
-  
-  해당 과정을 [블로깅](https://jaeyoungb.tistory.com/268)을 통해 정리했습니다.
 
-  최종적으로 개선된 코드는 다음과 같이 Service Key의 정보만 담긴 클래스를 따로 만들고, 각 Service Layer에서 의존성을 주입받아 사용하도록 개선했습니다.\
+</br>
   
+해당 문제를 :pushpin: [블로깅](https://jaeyoungb.tistory.com/268)을 통해 확실히 정리할 수 있었습니다.
+
+Service Key의 정보만 담긴 클래스를 따로 만들고, 각 Service Layer에서 의존성을 주입받아 사용하여 해결했습니다.
+
+```Java
+@Getter
+@Configuration
+@ConfigurationProperties(prefix = "open-api")
+public class OpenApiSecretInfo {
+
+    // 한국투자증권 API 요청 관련 키
+    private String appKey;
+    private String appSecret;
+
+    // 누리집 API 요청 관련 키
+    private String serviceKey;
+
+    // 네이버 검색 API 요청 관련 키
+    private String naverClientId;
+    private String naverClientSecret;
+}
+```
+
+</br>
+
+외부 서버를 이용하다 보니, 초당 요청량에 대한 제한이 있었습니다.
+
+try-catch문으로 외부 서버로부터 오는 요청량 초과에 대한 예외를 잡아서, 재요청하는 로직을 구성했었습니다.   
+그러다 보니, 비즈니스 로직이 복잡해지고 새로운 요청과 재요청이 만나 계속해서 에러가 발생하는 문제가 있었습니다.
+
+결국, 백엔드 서버 쪽에서 요청량에 대한 에러 메시지를 받으면 재요청을 요구하는 커스텀한 에러 메시지를 프론트에 내려주기로 했습니다.   
+프론트는 백엔드 서버로 **다시 요청**을 보내거나, **캐싱**과 **로드 밸런싱** 기능을 활용해서 해결하는 쪽으로 개선했습니다.   
+
+실무에서는 사용할 외부 서버와 따로 계약을 맺거나 하여, 요청량과 관련된 문제를 해결할 것 같습니다.   
+
+
 </div>
 </details>
 
-- 외부 open api 요청량 제한 문제 / 아쉬운 점, 해결했던 점
-- 누리집 데이터가 매일 오전 11시에 갱신된다고 가정. But, 업데이트가 매번 되진 않음 -> 해결 : 현재일로 5일전의 날짜를 담아서 호출
-- DateConfig 클래스 트러블 슈팅 문제 / 원인 결과 해결
+<details>
+<summary>누리집의 데이터가 매일 갱신되지 않는 문제 해결</summary>
+<div markdown="1">
+
+</br>
+
+백엔드 서버에서 매일 주기적으로 누리집 API를 호출하여 데이터를 받아오지만, 매일 누리집 데이터가 업데이트되진 않았습니다.   
+
+결국 오늘 날짜로부터 5일간의 데이터를 불러오도록 요청하고, 프론트로는 그 5일간의 데이터 중 가장 최신의 데이터를 필터링하여 응답해주도록 개선하였습니다.
+
+```Java
+// 외부 API 호출
+UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(url)
+                .queryParam("beginBasDt", dateConfig.getFromFiveDaysAgoToNow()) // 해당 부분
+                .build();
+
+// Service 로직
+public List<KOSPIStockIndex> getKOSPIStockIndex() {
+    List<KOSPIStockIndex> foundIndices = kospiStockIndexRepository.findAll();
+    verifyExistsData(foundIndices);
+
+    // 해당 부분
+    String theMostRecentBasDt = foundIndices.get(0).getBasDt();
+    List<KOSPIStockIndex> theMostRecentStockIndices = foundIndices.stream().filter(e -> e.getBasDt().equals(theMostRecentBasDt)).collect(Collectors.toList());
+
+    return theMostRecentStockIndices;
+}
+```
+:pushpin: [외부 API 호출 코드](https://github.com/bangjaeyoung/stock-box/blob/ecf73055a22d0abadb064f81f303bda6879f860e/server/src/main/java/mainproject/stocksite/domain/stock/overall/save/SaveKOSDAQStockIndex.java#L40C9-L47C26)   
+:pushpin: [비즈니스 로직 코드](https://github.com/bangjaeyoung/stock-box/blob/ecf73055a22d0abadb064f81f303bda6879f860e/server/src/main/java/mainproject/stocksite/domain/stock/overall/service/OverallStockService.java#L31C5-L39C6)
+
+</div>
+</details>
+
+<details>
+<summary>오늘로부터 5일전 날짜를 구하는 문제</summary>
+<div markdown="1">
+
+</br>
+
+오늘로부터 5일전 날짜는 String 타입의 yyyyMMdd 값이 필요했습니다. ex.20230830   
+문제가 있던 기존 코드는 다음과 같았습니다.
+
+```Java
+@Getter
+@Component
+public class DateConfig {
+    LocalDate now = LocalDate.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    String formattedNow = now.format(formatter);
+
+    String fromFiveDaysAgoToNow = String.valueOf(Integer.parseInt(formattedNow) - 5);
+}
+```
+
+20230804인 날짜로부터 5일전일 경우, 위 코드로는 20230799가 되어서 문제가 발생했었습니다.   
+
+개선한 코드는 다음과 같습니다.
+```Java
+@Getter
+@Component
+public class DateConfig {
+    public String getFromFiveDaysAgoToNow() {
+        Calendar cal = Calendar.getInstance();
+
+        SimpleDateFormat sdformat = new SimpleDateFormat("yyyyMMdd");
+
+        cal.add(Calendar.DATE, -5);
+
+        String fromFiveDaysAgoToNow = sdformat.format(cal.getTime());
+
+        return fromFiveDaysAgoToNow;
+    }
+}
+```
+</div>
+</details>
 
 </br>
 
 ## 8. 아쉬운 점 및 회고
-- api 호출 및 응답 데이터에 대한 커스텀 필드 사용 안함
-- Spring Batch, Quartz 사용 / 메모장 참고
-- 급한 기능 추가로 인한 비효율적인 ERD 설계
-- 모의 투자 기능 로직 고도화 필요성
-- db에 주식 데이터가 있는지에 대한 검증 메서드(exist 메서드) / 아쉬운 점 : querydsl의 count 메서드 사용 / jojoldu님 블로그 참고
+
+<details>
+<summary>외부 Open API 응답 데이터에 대한 커스텀 필드 사용</summary>
+<div markdown="1">
+
+</br>
+
+이번 프로젝트에서 외부 Open API를 처음 다루었습니다.   
+RestTemplate을 활용하여 API를 호출하고 응답받은 데이터와 엔티티 필드 간 매핑 작업이 쉽지 않았습니다.  
+
+결국 시간을 많이 소요했고, 응답된 데이터 필드를 그대로 프론트로 응답해주었습니다.   
+**필요한 데이터만**을 추려서 **알아보기 쉬운 필드명**으로 DTO를 구성했다면 더 좋았겠다는 아쉬움이 남습니다.
+  
+</div>
+</details>
+
+<details>
+<summary>Spring RestTemplate vs WebClient</summary>
+<div markdown="1">
+
+</br>
+
+다음에는 스프링 5.0부터 도입된 **WebClient** 인터페이스를 사용해보면 어떨까싶습니다.   
+물론 WebFlux 같은 어려운 개념을 익혀야 하겠지만, 유지 관리 모드(deprecated)인 RestTemplate을 대체해서 사용해보면 좋을 것 같습니다.
+  
+</div>
+</details>
+
+<details>
+<summary>Spring Batch, Quartz 사용</summary>
+<div markdown="1">
+
+</br>
+
+받아오는 주식 데이터는 결코 작은 데이터가 아니었습니다.   
+
+대용량 레코드 처리에 유용한 **Spring Batch**와 전용 스케쥴러인 **Quartz 스케쥴러**를 함께 사용하면 더 좋지 않았을까하는 아쉬움이 있습니다.   
+추후 기회가 생긴다면 해당 기술들을 학습하여 적용해보고 싶습니다.
+
+</div>
+</details>
+
+<details>
+<summary>모의 투자 기능 로직 고도화 필요성</summary>
+<div markdown="1">
+
+</br>
+
+모의 투자 기능은 다른 팀원이 맡았었고, 프로젝트 막바지에 전달받아 급하게 구현했었습니다.   
+
+로직을 상당히 복잡하게 작성했고 많이 부실한 로직이라고 생각합니다.   
+좀 더 보안적인 측면을 강화하고 가독성과 유지보수성이 좋은 코드가 될 수 있게끔 고민해야할 문제입니다.   
+
+</div>
+</details>
+
+<details>
+<summary>DB에 있는 주식 데이터가 존재하는지 체크하는 메서드</summary>
+<div markdown="1">
+
+</br>
+
+현재는 데이터를 `findAll()` 메서드를 통해 List 타입으로 모두 불러와서 `isEmpty()` 메서드를 통해 체크하고 있습니다.   
+
+DB에 주식 데이터가 존재 유무를 체크하는 exists 메서드를 Querydsl을 통한 JPQL로 작성했으면 좋았겠다는 아쉬움이 있습니다.   
+:pushpin: [참고할 블로그](https://jojoldu.tistory.com/516)   
+
+</div>
+</details>
+
+<details>
+<summary>외부 서버에 대한 의존성</summary>
+<div markdown="1">
+
+</br>
+
+이 프로젝트는 외부 Open API의 의존성이 매우 큰 프로젝트입니다.   
+주식 관련 서비스이기 때문에, 주식 데이터를 받아오지 못하는 것은 상당한 문제가 됩니다.   
+
+개인이 프로젝트로 진행하기에는 많은 제약이 있는 주제라고 생각됩니다.   
+해결할 수 있는 선에서, 요청량 제한과 같은 문제에 대비한 최대한 많은 방법들을 고려해야할 필요가 있습니다.   
+
+</div>
+</details>
