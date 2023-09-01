@@ -1,8 +1,8 @@
 # 💸 Stock-Box
-><b>국내 실시간 주식 조회 및 모의 투자 서비스</b>
+><b>국내 실시간 주식 조회 및 모의투자 서비스</b>
 >
->주식에 입문하는 분들을 타겟하여 제작하였습니다.   
->모의 투자를 통해 주식 매매에 대한 감을 키울 수 있는 서비스입니다.
+>주식에 입문하는 사용자들을 위해 구상한 서비스입니다.   
+>여러 국내 주식을 찾아보고, 모의투자를 통해 주식매매에 대한 감을 키울 수 있습니다.
 
 </br>
 
@@ -51,48 +51,43 @@
 </br>
 
 ## 5. 맡았던 핵심 기능
-### 5.1. 프록시 서버처럼 한국투자증권, 네이버 디밸로퍼 Open API를 호출
+### 프록시 서버 형태의 한국투자증권, 네이버 디벨로퍼 Open API 호출
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
 
-</br>
+**한국투자증권 API는 상세 주식 정보 데이터**를, **네이버 디벨로퍼 API는 증권 관련 뉴스 데이터**를 위해 사용됩니다.
 
-한국투자증권 API는 상세 주식 정보 데이터를, 네이버 디밸로퍼 API는 증권 관련 뉴스 데이터를 위해 사용됩니다.
+기존에는 프론트 서버에서 자체 프록시 서버를 통해 외부 API를 호출했습니다.   
+이후에는 백엔드 서버에서 외부 API를 호출하여 받은 데이터를 프론트로 전달해주는 방식으로 변경했습니다.   
 
-기존에 프론트 서버에서 자체 프록시 서버를 통해 외부 API를 호출하는 방식을 이용했습니다.   
-이후 백엔드 서버에서 외부 API를 호출한 후, 그 데이터를 프론트로 응답해주는 방식으로 변경하였습니다.   
-
-개선된 호출 흐름은 다음과 같습니다.
-
-1. 프론트 측에서 Open API에서 필요한 데이터를 백엔드 서버로 요청합니다.
-2. 백엔드 서버에서 Open API의 서버로 요청을 한 후, 데이터를 받아옵니다.
-3. 받아온 데이터를 프론트 측에 내려줍니다.
+변경된 호출 흐름은 다음과 같습니다.   
+1. 프론트 측에서 필요한 데이터를 백엔드 서버로 요청
+2. 백엔드 서버에서 Open API의 서버로 요청한 후, 데이터를 받아옴
+3. 받아온 데이터를 프론트 측에 전달
 
 이 과정 속에서 백엔드 서버는 단순 중계 서버 형태의 **프록시 서버 역할**을 합니다.   
 (위의 📌 [전체적인 흐름](#4-전체적인-흐름) 그림을 보면 흐름을 파악하시는 데 도움이 됩니다.)
 
-외부 API를 호출하기 위한 Service Key 노출 등과 같은 보안 위협을 방지하고, 프론트엔드는 사용자 경험과 UI에 더욱 집중할 수 있게 되었습니다.
+외부 API를 호출하기 위한 **Service Key 노출 등과 같은 보안 위협을 방지**하고, 프론트엔드는 **사용자 경험과 UI에 더욱 집중**할 수 있게 되었습니다.
 
-📌 [DetailedStockController.java](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/controller/DetailedStockController.java)   
-📌 [DetailedStockService.java](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/service/DetailedStockService.java)
+📌 [관련 Controller 코드](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/controller/DetailedStockController.java)   
+📌 [관련 Service 코드](https://github.com/bangjaeyoung/stock-box/blob/main/server/src/main/java/mainproject/stocksite/domain/stock/detail/service/DetailedStockService.java)
 
 </div>
 </details>
 
-### 5.2. 누리집 Open API를 활용한 주식 데이터 저장 및 관리
+### 누리집 Open API를 활용한 주식 데이터 저장 및 관리
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
 
-</br>
+**Spring RestTemplate**를 사용하여 누리집 Open API를 호출했습니다.   
 
-Spring RestTemplate를 활용하여 누리집 Open API를 호출하였습니다.   
-
-누리집의 데이터는 전체 주식 종목 리스트를 조회하기 위해 필요한 데이터입니다.   
-데이터들은 매일 오전 11시에 업데이트되기 때문에, 다음과 같이 Spring Scheduler를 통해 주기적으로 호출해서 데이터를 받아오도록 구현했습니다.
+**누리집 Open API는 전체 주식 종목 리스트**를 조회하기 위해 사용됩니다.   
+데이터들은 매일 **오전 11시**에 업데이트되기 때문에, **Spring Scheduler**를 통해 주기적으로 호출하여 데이터를 받아오도록 구현했습니다.
 
 ```Java
 @PostConstruct
@@ -117,79 +112,72 @@ public void deleteKOSPIStockList() {
 ```
 
 코스닥, 코스피별로 지수정보, 시세정보를 불러오기 위한 총 4개의 비즈니스 로직을 작성했습니다.   
-해당 [Save 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/stock/overall/save) 안의 클래스들은 모두 위 정보들을 불러오기 위한 누리집 Open API 호출과 관련된 로직들이 존재합니다.
+누리집 Open API 호출과 관련된 로직들은 모두 해당 📌 [Save 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/stock/overall/save)에 있습니다.   
 
 </div>
 </details>
 
-### 5.3. 모의 투자 기능 구현
+### 모의 투자 기능 구현
 
 <details>
 <summary>상세 설명</summary>
 <div markdown="1">
 
-</br>
+초기 유저는 모의투자를 위한 **기본금 1000만원**이 주어집니다.  
 
-처음 유저가 가입하면 모의투자 연습을 위한 기본금으로 1000만원이 주어집니다.  
-
-특정 주식의 사용자 UI에서 **매수** 버튼을 누르면 **BUY** / **매도** 버튼을 누르면 **SELL**의 타입으로 거래를 생성합니다.   
+특정 주식의 사용자 UI에서 **매수 버튼을 누르면 BUY** / **매도 버튼을 누르면 SELL의 타입**으로 거래를 생성합니다.   
 📌 [매수, 매도 관련 Controller 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/controller/TradeController.java#L29C5-L35C6)
 
-이미 해당 주식 종목을 갖고 있는지 확인하고, 금액은 충분한지 등의 여러 조건들을 거쳐 거래가 처리됩니다.   
+해당 주식 종목을 이미 갖고 있는지, 금액은 충분한지 등의 여러 조건들을 거쳐 거래가 처리됩니다.   
 📌 [매수, 매도 관련 Servicea 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/service/TradeService.java#L26C5-L82C6)
 
-돈 거래이기 때문에, Java에서 숫자를 정밀하게 저장하고 표현할 수 있는 **BigDecimal** 타입을 사용했습니다.   
-Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 투자 기록 조회 기능도 포함하기 위함입니다.   
+정확한 계산이 필요한 돈 거래이기 때문에, Java에서 숫자를 정밀하게 저장하고 표현할 수 있는 **BigDecimal 타입**을 사용했습니다.   
+Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 **투자 기록 조회 기능**도 구현하기 위함입니다.   
 
-모의 투자 기능을 급하게 맡아서 구현했던 상황이었기 때문에, 불필요한 로직이 많고 가독성이 좋지 못합니다.   
+모의 투자 기능은 급하게 맡아서 구현했던 기능이었기에, 불필요한 로직이 많고 가독성 또한 좋지 못합니다.   
 추후 회고에서 다룰 부분이기도 합니다.   
 
 </div>
 </details>
 
-### 5.4. 주식 종목 북마크 CRUD 기능 구현
-📌 [북마크 관련 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/bookmark)
+### 주식 종목 북마크 CRUD 기능 구현
+📌 [북마크 기능 관련 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/bookmark)
 
 </br>
 
 ## 6. 핵심 트러블 슈팅
 
-### 6.1. 문제 상황
-기존에는 프론트에서 누리집 API를 호출했습니다.   
-프론트에서 호출이 가능했던 이유는 CORS 에러가 발생하지 않았기 때문입니다.   
+### 1) 문제 상황
+기존에는 프론트측에서 누리집 API를 호출했습니다.   
+프론트측에서 호출이 가능했던 이유는 CORS 에러가 발생하지 않았기 때문입니다.   
 (누리집은 공공 데이터 포털이기 때문에, 모든 CORS 설정을 허용한거라고 추측하고 있습니다.)   
 
-이러한 방식은 데이터의 **응답 속도가 느리다**는 단점이 있었습니다.
+이러한 방식은 **데이터 응답 속도가 느리다**는 단점이 있었습니다.
 
-### 6.2. 문제 해결 과정
-필요한 기능들을 모두 개발한 후, 백엔드 서버에서 누리집 API를 호출하는 것으로 개선했습니다.
-1. Spring RestTemplate을 사용하여 누리집 API를 호출합니다.
-2. 응답된 데이터를 DB에 저장합니다.
-3. 위 1, 2번 과정을 주기적으로 반복하여 DB의 데이터를 업데이트합니다.
-4. 프론트 측에서 필요한 데이터를 백엔드 서버로 요청하면, 백엔드 서버는 DB로 요청하여 데이터를 가져옵니다.
+### 2) 문제 해결 과정
+백엔드 서버에서 누리집 API를 호출하는 것으로 개선했습니다. 과정은 다음과 같습니다.
+1. Spring RestTemplate을 사용하여 누리집 API를 호출하여 데이터를 받아옴   
+2. 받아온 데이터를 DB에 저장   
+3. 위 1, 2번 과정을 매일 반복하여 DB의 데이터를 지속적으로 업데이트   
+4. 프론트 측에서 필요한 데이터를 백엔드 서버로 요청하면, 백엔드 서버는 DB로 요청하여 데이터를 받아와 전달
 
-위의 📌 [전체적인 흐름](#4-전체적인-흐름) 사진과 📌 [누리집 관련 설명](#52-누리집-open-api를-활용한-주식-데이터-저장-및-관리)을 보면 이해하시는 데 도움이 됩니다.
+위의 📌 [전체적인 흐름](#4-전체적인-흐름) 사진을 참고하시면 이해하는 데 도움이 됩니다.
 
-### 6.3. 개선된 점
-1. 프론트와 백엔드의 역할 분리
-2. 보안적인 요소 노출 제거
-3. 데이터를 받아오는 데 걸리는 시간을 **약 1~2초에서 약 0.3초로 1/3 정도의 요청 시간 단축**
+### 3) 개선된 점
+1. 프론트와 백엔드의 **역할 분리**   
+2. **보안적인 요소 노출 제거**   
+3. 기존 방식의 데이터를 받아오던 시간을 **약 1~2초에서 약 0.3초로 1/3 정도의 요청 시간 단축**
 
-
-나머지 한국투자증권, 네이버 디밸로퍼 API는 애초에 CORS 에러가 발생했기 때문에, 백엔드 서버를 거쳐 요청해올 수 있도록 구현했습니다.
+나머지 한국투자증권, 네이버 디벨로퍼 API는 CORS 에러로 인해, 애초에 백엔드 서버를 거쳐 요청해올 수 있도록 구현했습니다.
 
 </br>
 
 ## 7. 그 외 트러블 슈팅
 <details>
-<summary>yml 파일의 환경 변수를 불러오지 못하고 null 값이 되는 문제</summary>
+<summary><b>yml 파일의 환경 변수를 불러오지 못하고 null 값이 되는 문제</b></summary>
 <div markdown="1">
 
-</br>
-  
-해당 문제를 :pushpin: [블로깅](https://jaeyoungb.tistory.com/268)을 통해 확실히 정리할 수 있었습니다.
-
-Service Key의 정보만 담긴 클래스를 따로 만들고, 각 Service Layer에서 의존성을 주입받아 사용하여 해결했습니다.
+Service Key의 정보만 담긴 클래스를 따로 만들고, 각 Service Layer에서 의존성을 주입받아 사용하여 해결했습니다.   
 
 ```Java
 @Getter
@@ -210,31 +198,38 @@ public class OpenApiSecretInfo {
 }
 ```
 
-</br>
-
-외부 서버를 이용하다 보니, 초당 요청량에 대한 제한이 있었습니다.
-
-try-catch문으로 외부 서버로부터 오는 요청량 초과에 대한 예외를 잡아서, 재요청하는 로직을 구성했었습니다.   
-그러다 보니, 비즈니스 로직이 복잡해지고 새로운 요청과 재요청이 만나 계속해서 에러가 발생하는 문제가 있었습니다.
-
-결국, 백엔드 서버 쪽에서 요청량에 대한 에러 메시지를 받으면 재요청을 요구하는 커스텀한 에러 메시지를 프론트에 내려주기로 했습니다.   
-프론트는 백엔드 서버로 **다시 요청**을 보내거나, **캐싱**과 **로드 밸런싱** 기능을 활용해서 해결하는 쪽으로 개선했습니다.   
-
-실무에서는 사용할 외부 서버와 따로 계약을 맺거나 하여, 요청량과 관련된 문제를 해결할 것 같습니다.   
-
+해당 문제를 :pushpin: [블로깅](https://jaeyoungb.tistory.com/268)하여 확실히 정리해둘 수 있었습니다.
 
 </div>
 </details>
 
 <details>
-<summary>누리집의 데이터가 매일 갱신되지 않는 문제 해결</summary>
+<summary><b>외부 서버의 초당 요청량 제한</b></summary>
 <div markdown="1">
 
-</br>
+외부 서버로의 초당 요청량에 대한 제한이 있었습니다.
 
-백엔드 서버에서 매일 주기적으로 누리집 API를 호출하여 데이터를 받아오지만, 매일 누리집 데이터가 업데이트되진 않았습니다.   
+초기에는 외부 서버로부터 응답되는 요청량 초과에 대한 예외를 잡아서, 재요청하는 로직을 구성했습니다. (try-catch문)   
+그 결과, **비즈니스 로직이 다소 복잡**해지고 **새로운 요청과 재요청이 만나 계속해서 에러가 발생**하는 문제가 있었습니다.
 
-결국 오늘 날짜로부터 5일간의 데이터를 불러오도록 요청하고, 프론트로는 그 5일간의 데이터 중 가장 최신의 데이터를 필터링하여 응답해주도록 개선하였습니다.
+결국, 요청량 제한에 대한 에러 메시지가 백엔드 서버로 도착하면 **커스텀한 에러 메시지**를 프론트에 내려주기로 했습니다.   
+
+프론트 측에서는 해당 에러 메시지를 받으면,   
+백엔드 서버로 **다시 요청**을 보내거나 **캐싱**과 **로드 밸런싱** 기능을 활용해서 해결하도록 개선했습니다.   
+
+실무에서는 외부 서버와 따로 계약을 맺고 요청량 제한 문제가 발생하지 않도록 해결할 것 같습니다.   
+
+</div>
+</details>
+
+<details>
+<summary><b>누리집 데이터가 매일 갱신되지 않는 문제</b></summary>
+<div markdown="1">
+
+백엔드 서버에서 매일 주기적으로 누리집 API를 호출하여 데이터를 받아오지만, 누리집 데이터가 매일 업데이트되진 않았습니다.   
+
+결국 **오늘 날짜로부터 5일 전까지의 데이터**를 받아오도록 하고,   
+프론트 측으로 그 5일간의 데이터 중 **가장 최신의 데이터를 필터링하여 전달**하도록 개선하였습니다.   
 
 ```Java
 // 외부 API 호출
@@ -261,12 +256,10 @@ public List<KOSPIStockIndex> getKOSPIStockIndex() {
 </details>
 
 <details>
-<summary>오늘로부터 5일전 날짜를 구하는 문제</summary>
+<summary><b>오늘로부터 5일전 날짜를 구하는 로직에서의 문제</b></summary>
 <div markdown="1">
 
-</br>
-
-오늘로부터 5일전 날짜는 String 타입의 yyyyMMdd 값이 필요했습니다. ex.20230830   
+오늘로부터 5일전 날짜는 String 타입의 yyyyMMdd 형태의 값이 필요했습니다. ex.20230830   
 문제가 있던 기존 코드는 다음과 같았습니다.
 
 ```Java
@@ -309,85 +302,77 @@ public class DateConfig {
 ## 8. 아쉬운 점 및 회고
 
 <details>
-<summary>외부 Open API 응답 데이터에 대한 커스텀 필드 사용</summary>
+<summary><b>외부 Open API 데이터를 그대로 프론트측에 전달</b></summary>
 <div markdown="1">
 
-</br>
+외부 Open API는 이번 프로젝트에서 처음 다루었습니다.   
+RestTemplate을 활용하여 API를 호출하고 받아온 데이터와 DB에 저장한 엔티티 필드 간 매핑 작업은 저에겐 쉬운 작업이 아니었습니다.   
 
-이번 프로젝트에서 외부 Open API를 처음 다루었습니다.   
-RestTemplate을 활용하여 API를 호출하고 응답받은 데이터와 엔티티 필드 간 매핑 작업이 쉽지 않았습니다.  
+결국 시간을 많이 소요하게 되었고, DB에 저장된 데이터 그대로를 그대로 프론트로 응답해주었습니다.   
 
-결국 시간을 많이 소요했고, 응답된 데이터 필드를 그대로 프론트로 응답해주었습니다.   
-**필요한 데이터만**을 추려서 **알아보기 쉬운 필드명**으로 DTO를 구성했다면 더 좋았겠다는 아쉬움이 남습니다.
+외부 Open API에서 받아온 데이터 중 **필요한 데이터만**을 추려서 DB에 저장하고,   
+**이해하기 쉬운 필드명**으로 응답 dto를 구성했다면 더 좋았겠다는 아쉬움이 남습니다.   
   
 </div>
 </details>
 
 <details>
-<summary>Spring RestTemplate vs WebClient</summary>
+<summary><b>Spring RestTemplate vs WebClient</b></summary>
 <div markdown="1">
 
-</br>
+다음에 외부 서버의 API를 호출해야 한다면, 스프링 5.0부터 도입된 **WebClient** 인터페이스를 사용하는 것도 괜찮을 것 같다는 생각입니다.
 
-다음에는 스프링 5.0부터 도입된 **WebClient** 인터페이스를 사용해보면 어떨까싶습니다.   
-물론 WebFlux 같은 어려운 개념을 익혀야 하겠지만, 유지 관리 모드(deprecated)인 RestTemplate을 대체해서 사용해보면 좋을 것 같습니다.
+물론 WebFlux와 같은 쉽지 않은 개념을 알아야 하고 단순히 API 호출을 위해 WebFlux 라이브러리를 추가해야 하는 것은 팀원들과 상의해봐야할 일이지만,   
+상황이 허락해준다면 유지 관리 모드(deprecated)인 RestTemplate을 대체해서 한 번 사용해보고 싶습니다.   
   
 </div>
 </details>
 
 <details>
-<summary>Spring Batch, Quartz 사용</summary>
+<summary><b>Spring Batch, Quartz 사용</b></summary>
 <div markdown="1">
 
-</br>
+받아오는 주식 데이터량은 결코 작지 않았습니다.
 
-받아오는 주식 데이터는 결코 작은 데이터가 아니었습니다.   
-
-대용량 레코드 처리에 유용한 **Spring Batch**와 전용 스케쥴러인 **Quartz 스케쥴러**를 함께 사용하면 더 좋지 않았을까하는 아쉬움이 있습니다.   
+대용량 레코드 처리에 유용한 **Spring Batch**와 전용 스케쥴러인 **Quartz 스케쥴러**를 함께 적용해봤으면 좋지 않았을까하는 아쉬움이 남습니다.   
 추후 기회가 생긴다면 해당 기술들을 학습하여 적용해보고 싶습니다.
 
 </div>
 </details>
 
 <details>
-<summary>모의 투자 기능 로직 고도화 필요성</summary>
+<summary><b>모의 투자 기능 로직 고도화 필요성</b></summary>
 <div markdown="1">
 
-</br>
+모의 투자 기능은 원래 다른 팀원에게 할당되어 있었고, 프로젝트 막바지에 제가 전달받아 급하게 구현했었습니다.   
 
-모의 투자 기능은 다른 팀원이 맡았었고, 프로젝트 막바지에 전달받아 급하게 구현했었습니다.   
-
-로직을 상당히 복잡하게 작성했고 많이 부실한 로직이라고 생각합니다.   
-좀 더 보안적인 측면을 강화하고 가독성과 유지보수성이 좋은 코드가 될 수 있게끔 고민해야할 문제입니다.   
+마감기한이 얼마남지 않은 상황에서 구현한 해당 기능은 많이 부실하다고 생각합니다.   
+보안적인 측면을 좀 더 강화시키고 가독성과 유지보수성이 좋은 코드로 리팩토링이 필요할 것 같습니다.
 
 </div>
 </details>
 
 <details>
-<summary>DB에 있는 주식 데이터가 존재하는지 체크하는 메서드</summary>
+<summary><b>DB에 주식 데이터가 존재하는지 확인하는 메서드</b></summary>
 <div markdown="1">
 
-</br>
+현재는 데이터를 `findAll()` 메서드를 통해 모두 받아와서 `isEmpty()` 메서드를 통해 존재 유무를 체크하고 있습니다.   
 
-현재는 데이터를 `findAll()` 메서드를 통해 List 타입으로 모두 불러와서 `isEmpty()` 메서드를 통해 체크하고 있습니다.   
-
-DB에 주식 데이터가 존재 유무를 체크하는 exists 메서드를 Querydsl을 통한 JPQL로 작성했으면 좋았겠다는 아쉬움이 있습니다.   
-:pushpin: [참고할 블로그](https://jojoldu.tistory.com/516)   
+주식 데이터의 존재 유무를 체크하는 exists 메서드를 Querydsl을 통한 JPQL 쿼리로 작성했으면 좋을 것 같습니다.   
+:pushpin: [참고한 블로그](https://jojoldu.tistory.com/516)   
 
 </div>
 </details>
 
 <details>
-<summary>외부 서버에 대한 의존성</summary>
+<summary><b>외부 서버에 대한 높은 의존성</b></summary>
 <div markdown="1">
 
-</br>
+이 프로젝트는 외부 Open API의 의존성이 매우 높은 프로젝트입니다.   
+주식 관련 서비스이기 때문에, 주식 데이터를 받아오지 못하면 해당 서비스는 아무것도 아니게 됩니다.   
 
-이 프로젝트는 외부 Open API의 의존성이 매우 큰 프로젝트입니다.   
-주식 관련 서비스이기 때문에, 주식 데이터를 받아오지 못하는 것은 상당한 문제가 됩니다.   
-
-개인이 프로젝트로 진행하기에는 많은 제약이 있는 주제라고 생각됩니다.   
-해결할 수 있는 선에서, 요청량 제한과 같은 문제에 대비한 최대한 많은 방법들을 고려해야할 필요가 있습니다.   
+제 생각에는 개인이 이 주제로 프로젝트를 진행하기에는 신경써야할 많은 제약이 있다고 생각합니다.   
+이 프로젝트를 진행하면서, 요청량 제한과 같은 문제를 해결할 수 있는 선에서 최대한 극복하려고 했던 것 같습니다.
 
 </div>
 </details>
