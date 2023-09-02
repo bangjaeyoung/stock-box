@@ -43,14 +43,14 @@
 
 </br>
 
-## 4. 전체적인 흐름
+## 5. 전체적인 흐름
 <img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/80f112f3-9ed0-44c2-943b-8c1a319b6552">
 
 </br>
 </br>
 </br>
 
-## 5. 맡았던 핵심 기능
+## 6. 맡았던 핵심 기능
 ### 프록시 서버 형태의 한국투자증권, 네이버 디벨로퍼 Open API 호출
 
 <details>
@@ -129,7 +129,7 @@ public void deleteKOSPIStockList() {
 📌 [매수, 매도 관련 Controller 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/controller/TradeController.java#L29C5-L35C6)
 
 해당 주식 종목을 이미 갖고 있는지, 금액은 충분한지 등의 여러 조건들을 거쳐 거래가 처리됩니다.   
-📌 [매수, 매도 관련 Servicea 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/service/TradeService.java#L26C5-L82C6)
+📌 [매수, 매도 관련 Service 코드](https://github.com/bangjaeyoung/stock-box/blob/22428406b17d0aa35494488e57e586f078d12849/server/src/main/java/mainproject/stocksite/domain/trade/service/TradeService.java#L26C5-L82C6)
 
 정확한 계산이 필요한 돈 거래이기 때문에, Java에서 숫자를 정밀하게 저장하고 표현할 수 있는 BigDecimal 타입을 사용했습니다.   
 Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 투자 기록 조회 기능도 구현하기 위함입니다.   
@@ -141,11 +141,19 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 </details>
 
 ### 주식 종목 북마크 CRUD 기능 구현
+
+<details>
+<summary>상세 설명</summary>
+<div markdown="1">
+
 📌 [북마크 기능 관련 폴더](https://github.com/bangjaeyoung/stock-box/tree/main/server/src/main/java/mainproject/stocksite/domain/bookmark)
+
+</div>
+</details>
 
 </br>
 
-## 6. 핵심 트러블 슈팅
+## 7. 핵심 트러블 슈팅
 
 ### 1) 문제 상황
 기존에는 프론트측에서 누리집 API를 호출했습니다.   
@@ -172,7 +180,7 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 
 </br>
 
-## 7. 그 외 트러블 슈팅
+## 8. 그 외 트러블 슈팅
 <details>
 <summary><b>yml 파일의 환경 변수를 불러오지 못하고 null 값이 되는 문제</b></summary>
 <div markdown="1">
@@ -299,7 +307,7 @@ public class DateConfig {
 
 </br>
 
-## 8. 아쉬운 점 및 회고
+## 9. 아쉬운 점 및 회고
 
 <details>
 <summary><b>외부 Open API 데이터를 그대로 프론트측에 전달</b></summary>
