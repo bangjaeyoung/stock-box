@@ -6,13 +6,34 @@
 
 </br>
 
-## 1. 제작 기간 & 참여 인원
+## 1. 실제 서비스 화면
+
+### ✔ 주식 전체 & 종목 TOP10 페이지
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/79b663d7-98a9-4cc2-956f-deded5041625"/>
+
+### ✔ 특정 종목 검색
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/da88b7fd-089a-484a-b072-a4010681d81f"/>
+
+### ✔ 주식 상세 페이지
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/709efb1e-f444-49d8-b879-1d1e8ead36ab"/>
+
+### ✔ 나의 관심 종목 페이지(북마크)
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/3c4287c2-e621-4c76-bbe1-8bc6ec9373cb"/>
+
+### ✔ 나의 자산 관리 페이지
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/16be105d-7168-4ef2-88b9-ab9f2bb63af6"/>
+
+</br>
+</br>
+</br>
+
+## 2. 제작 기간 & 참여 인원
 - 2023년 1월 3일 ~ 2023년 2월 3일
 - 팀 프로젝트(프론트엔드 3명, 백엔드 3명)
 
 </br>
 
-## 2. 사용 기술
+## 3. 사용 기술
 #### `Back-end`
   - Java 11
   - Spring Boot 2.7.7
@@ -23,7 +44,7 @@
 
 </br>
 
-## 3. ERD 설계
+## 4. ERD 설계
 <img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/929dcc70-8ae0-441d-a554-996cde977dd0" width= 1200 height=600>
 
 </br>
@@ -33,7 +54,7 @@
 
 </br>
 
-## 4. 사용자 요구사항 정의서
+## 5. 사용자 요구사항 정의서
 <img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/1404474a-426a-4f3e-88cc-c15727a9edf8">
 
 </br>
@@ -43,14 +64,14 @@
 
 </br>
 
-## 5. 전체적인 흐름
+## 6. 전체적인 흐름
 <img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/80f112f3-9ed0-44c2-943b-8c1a319b6552">
 
 </br>
 </br>
 </br>
 
-## 6. 맡았던 핵심 기능
+## 7. 맡았던 핵심 기능
 ### 프록시 서버 형태의 한국투자증권, 네이버 디벨로퍼 Open API 호출
 
 <details>
@@ -153,7 +174,7 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 
 </br>
 
-## 7. 핵심 트러블 슈팅
+## 8. 핵심 트러블 슈팅
 
 ### 1) 문제 상황
 기존에는 프론트측에서 누리집 API를 호출했습니다.   
@@ -180,7 +201,7 @@ Trade라는 별도의 엔티티를 만든 이유는 투자 연습에 알맞게 �
 
 </br>
 
-## 8. 그 외 트러블 슈팅
+## 9. 그 외 트러블 슈팅
 <details>
 <summary><b>yml 파일의 환경 변수를 불러오지 못하고 null 값이 되는 문제</b></summary>
 <div markdown="1">
@@ -307,7 +328,7 @@ public class DateConfig {
 
 </br>
 
-## 9. 아쉬운 점 및 회고
+## 10. 아쉬운 점 및 회고
 
 <details>
 <summary><b>외부 Open API 데이터를 그대로 프론트측에 전달</b></summary>
