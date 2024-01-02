@@ -9,19 +9,19 @@
 ## 1. 실제 서비스 화면
 
 ### ✔ 주식 전체 & 종목 TOP10 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/79b663d7-98a9-4cc2-956f-deded5041625" width="80%" height="80%"/>
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/79b663d7-98a9-4cc2-956f-deded5041625"/>
 
 ### ✔ 특정 종목 검색
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/da88b7fd-089a-484a-b072-a4010681d81f" width="80%" height="80%"/>
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/da88b7fd-089a-484a-b072-a4010681d81f"/>
 
 ### ✔ 주식 상세 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/709efb1e-f444-49d8-b879-1d1e8ead36ab" width="80%" height="80%"/>
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/709efb1e-f444-49d8-b879-1d1e8ead36ab"/>
 
 ### ✔ 나의 관심 종목 페이지(북마크)
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/3c4287c2-e621-4c76-bbe1-8bc6ec9373cb" width="80%" height="80%"/>
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/3c4287c2-e621-4c76-bbe1-8bc6ec9373cb"/>
 
 ### ✔ 나의 자산 관리 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/16be105d-7168-4ef2-88b9-ab9f2bb63af6" width="80%" height="80%"/>
+<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/16be105d-7168-4ef2-88b9-ab9f2bb63af6"/>
 
 </br>
 </br>
