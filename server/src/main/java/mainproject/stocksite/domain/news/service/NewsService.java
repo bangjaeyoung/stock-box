@@ -45,11 +45,11 @@ public class NewsService {
         
         // 캐시 히트일 경우, 저장된 캐시 데이터 반환
         if (cacheValue != null) {
-            log.info("Redis cache existed!");
+//            log.info("Redis cache existed!");
             return cacheValue;
         }
         
-        log.info("Redis cache doesn't existed!");
+//        log.info("Redis cache doesn't existed!");
         
         HttpEntity<String> requestMessage = new HttpEntity<>(getBaseHeaders());
         
