@@ -18,7 +18,7 @@ public class KosdaqStockDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class IndicesResponse {
+    public static class IndexResponse {
         private String basDt;
         private String idxNm;
         private String idxCsf;
@@ -46,7 +46,7 @@ public class KosdaqStockDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ListsResponse {
+    public static class ListResponse {
         private String basDt;
         private String srtnCd;
         private String isinCd;

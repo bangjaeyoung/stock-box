@@ -17,7 +17,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface KosdaqStockMapper {
     
-    List<KosdaqStockDto.IndicesResponse> KOSDAQStockIndicesToStockIndexResponseDtos(List<KosdaqStockIndex> kosdaqStockIndices);
+    List<KosdaqStockDto.IndexResponse> kosdaqStockIndicesToResponseDtos(List<KosdaqStockIndex> kosdaqStockIndices);
     
-    List<KosdaqStockDto.ListsResponse> KOSDAQStockListsToStockListsResponseDtos(List<KosdaqStockList> kosdaqStockLists);
+    List<KosdaqStockDto.ListResponse> kosdaqStockListsToResponseDtos(List<KosdaqStockList> kosdaqStockLists);
 }

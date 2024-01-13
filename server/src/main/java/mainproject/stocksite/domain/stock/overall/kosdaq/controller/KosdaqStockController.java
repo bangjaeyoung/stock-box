@@ -16,7 +16,7 @@ import java.util.List;
  * FileName: KosdaqStockController
  * Author: bangjaeyoung
  * Date: 2024-01-13
- * Description: KOSPI 전체 주식정보 조회 API 컨트롤러
+ * Description: KOSDAQ 전체 주식정보 조회 API 컨트롤러
  */
 @RestController
 @RequiredArgsConstructor
@@ -27,15 +27,15 @@ public class KosdaqStockController {
     
     // index: 주가지수시세
     @GetMapping("/index")
-    public ResponseEntity<List<KosdaqStockDto.IndicesResponse>> getIndicesOfKospi() {
-        List<KosdaqStockDto.IndicesResponse> response = kosdaqStockService.getKOSDAQStockIndices();
+    public ResponseEntity<List<KosdaqStockDto.IndexResponse>> getIndicesOfKosdaq() {
+        List<KosdaqStockDto.IndexResponse> response = kosdaqStockService.getKosdaqStockIndices();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
     // list: 주식시세
     @GetMapping("/list")
-    public ResponseEntity<List<KosdaqStockDto.ListsResponse>> getListsOfKospi() {
-        List<KosdaqStockDto.ListsResponse> response = kosdaqStockService.getKOSDAQStockLists();
+    public ResponseEntity<List<KosdaqStockDto.ListResponse>> getListsOfKosdaq() {
+        List<KosdaqStockDto.ListResponse> response = kosdaqStockService.getKosdaqStockLists();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

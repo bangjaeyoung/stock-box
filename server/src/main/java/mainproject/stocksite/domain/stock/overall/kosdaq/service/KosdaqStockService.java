@@ -33,7 +33,7 @@ public class KosdaqStockService {
     private final KosdaqStockListRepository kosdaqStockListRepository;
     private final KosdaqStockIndexRepository kosdaqStockIndexRepository;
     
-    public List<KosdaqStockDto.IndicesResponse> getKOSDAQStockIndices() {
+    public List<KosdaqStockDto.IndexResponse> getKosdaqStockIndices() {
         List<KosdaqStockIndex> foundIndices = kosdaqStockIndexRepository.findAll();
         verifyExistsData(foundIndices);
         
@@ -44,10 +44,10 @@ public class KosdaqStockService {
         
         log.info("KOSDAQ-stocks/index");
         
-        return kosdaqStockMapper.KOSDAQStockIndicesToStockIndexResponseDtos(theMostRecentStockIndices);
+        return kosdaqStockMapper.kosdaqStockIndicesToResponseDtos(theMostRecentStockIndices);
     }
     
-    public List<KosdaqStockDto.ListsResponse> getKOSDAQStockLists() {
+    public List<KosdaqStockDto.ListResponse> getKosdaqStockLists() {
         List<KosdaqStockList> foundLists = kosdaqStockListRepository.findAll();
         verifyExistsData(foundLists);
         
@@ -58,7 +58,7 @@ public class KosdaqStockService {
         
         log.info("KOSDAQ-stocks/list");
         
-        return kosdaqStockMapper.KOSDAQStockListsToStockListsResponseDtos(theMostRecentStockLists);
+        return kosdaqStockMapper.kosdaqStockListsToResponseDtos(theMostRecentStockLists);
     }
     
     private <T> void verifyExistsData(List<T> data) {
