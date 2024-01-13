@@ -1,4 +1,4 @@
-package mainproject.stocksite.domain.stock.overall.config;
+package mainproject.stocksite.domain.stock.overall.util;
 
 import lombok.Getter;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
  */
 @Getter
 @Component
-public class DateConfig {
+public class DateUtils {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     
     public static String getFiveDaysAgoToNow() {
