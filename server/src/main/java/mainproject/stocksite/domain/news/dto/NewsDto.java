@@ -18,7 +18,7 @@ public class NewsDto {
         private Integer total;
         private Integer start;
         private Integer display;
-        private List<Item> items = null;
+        private List<Item> items;
         
         @Getter
         @Builder
