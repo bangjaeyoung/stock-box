@@ -1,4 +1,4 @@
-package mainproject.stocksite.domain.stock.overall.kospi;
+package mainproject.stocksite.domain.stock.overall.kospi.entity;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,6 +10,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+/**
+ * PackageName: mainproject.stocksite.domain.stock.overall.kospi.entity
+ * FileName: KospiStockList
+ * Author: bangjaeyoung
+ * Date: 2024-01-14
+ * Description: KOSPI 주식시세
+ */
 @Getter
 @Entity(name = "KOSPI_STOCK_LIST")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
