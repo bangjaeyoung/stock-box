@@ -28,7 +28,7 @@ public class KospiStockListUpdater {
     private static final String TIME_ZONE = "Asia/Seoul";
     private static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPI Stock Lists: ";
     private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
-    private static final int NUM_OF_ROWS = 2000;
+    private static final int NUM_OF_ROWS = 1000;
     private static final int PAGE_NO = 1;
     
     private final KospiStockListRepository kospiStockListRepository;
@@ -86,11 +86,19 @@ public class KospiStockListUpdater {
     }
     
     private void saveKospiStockLists(JSONArray item) {
+        String latestDate = getLatestDate(item);
         for (long i = 0; i < item.size(); i++) {
             JSONObject jsonObject = (JSONObject) item.get((int) i);
-            KospiStockList kospiStockList = createKospiStockListFromJson(jsonObject, i + 1);
-            kospiStockListRepository.save(kospiStockList);
+            if (jsonObject.get("basDt").equals(latestDate)) {
+                KospiStockList kospiStockList = createKospiStockListFromJson(jsonObject, i + 1);
+                kospiStockListRepository.save(kospiStockList);
+            }
         }
+    }
+    
+    private String getLatestDate(JSONArray item) {
+        JSONObject firstItem = (JSONObject) item.get(0);
+        return (String) firstItem.get("basDt");
     }
     
     private KospiStockList createKospiStockListFromJson(JSONObject jsonObject, long id) {

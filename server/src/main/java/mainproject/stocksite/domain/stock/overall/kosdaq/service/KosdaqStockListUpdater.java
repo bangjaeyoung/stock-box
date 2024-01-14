@@ -93,11 +93,19 @@ public class KosdaqStockListUpdater {
     }
     
     private void saveKosdaqStockLists(JSONArray item) {
+        String latestDate = getLatestDate(item);
         for (long i = 0; i < item.size(); i++) {
             JSONObject jsonObject = (JSONObject) item.get((int) i);
-            KosdaqStockList kosdaqStockList = createKosdaqStockListFromJson(jsonObject, i + 1);
-            kosdaqStockListRepository.save(kosdaqStockList);
+            if (jsonObject.get("basDt").equals(latestDate)) {
+                KosdaqStockList kosdaqStockList = createKosdaqStockListFromJson(jsonObject, i + 1);
+                kosdaqStockListRepository.save(kosdaqStockList);
+            }
         }
+    }
+    
+    private String getLatestDate(JSONArray item) {
+        JSONObject firstItem = (JSONObject) item.get(0);
+        return (String) firstItem.get("basDt");
     }
     
     private KosdaqStockList createKosdaqStockListFromJson(JSONObject jsonObject, long id) {

@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
@@ -34,31 +33,21 @@ public class KosdaqStockService {
     private final KosdaqStockIndexRepository kosdaqStockIndexRepository;
     
     public List<KosdaqStockDto.IndexResponse> getKosdaqStockIndices() {
-        List<KosdaqStockIndex> foundIndices = kosdaqStockIndexRepository.findAll();
-        verifyExistsData(foundIndices);
-        
-        String theMostRecentBasDt = foundIndices.get(0).getBasDt();
-        List<KosdaqStockIndex> theMostRecentStockIndices = foundIndices.stream()
-                .filter(e -> e.getBasDt().equals(theMostRecentBasDt))
-                .collect(Collectors.toList());
+        List<KosdaqStockIndex> kosdaqStockIndices = kosdaqStockIndexRepository.findAll();
+        verifyExistsData(kosdaqStockIndices);
         
         log.info("KOSDAQ-stocks/index");
         
-        return kosdaqStockMapper.kosdaqStockIndicesToResponseDtos(theMostRecentStockIndices);
+        return kosdaqStockMapper.kosdaqStockIndicesToResponseDtos(kosdaqStockIndices);
     }
     
     public List<KosdaqStockDto.ListResponse> getKosdaqStockLists() {
-        List<KosdaqStockList> foundLists = kosdaqStockListRepository.findAll();
-        verifyExistsData(foundLists);
-        
-        String theMostRecentBasDt = foundLists.get(0).getBasDt();
-        List<KosdaqStockList> theMostRecentStockLists = foundLists.stream()
-                .filter(e -> e.getBasDt().equals(theMostRecentBasDt))
-                .collect(Collectors.toList());
+        List<KosdaqStockList> kosdaqStockLists = kosdaqStockListRepository.findAll();
+        verifyExistsData(kosdaqStockLists);
         
         log.info("KOSDAQ-stocks/list");
         
-        return kosdaqStockMapper.kosdaqStockListsToResponseDtos(theMostRecentStockLists);
+        return kosdaqStockMapper.kosdaqStockListsToResponseDtos(kosdaqStockLists);
     }
     
     private <T> void verifyExistsData(List<T> data) {

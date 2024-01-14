@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kospi.service
@@ -34,31 +33,22 @@ public class KospiStockService {
     private final KospiStockIndexRepository kospiStockIndexRepository;
     
     public List<KospiStockDto.IndexResponse> getKospiStockIndices() {
-        List<KospiStockIndex> foundIndices = kospiStockIndexRepository.findAll();
-        verifyExistsData(foundIndices);
-        
-        String theMostRecentBasDt = foundIndices.get(0).getBasDt();
-        List<KospiStockIndex> theMostRecentStockIndices = foundIndices.stream()
-                .filter(e -> e.getBasDt().equals(theMostRecentBasDt))
-                .collect(Collectors.toList());
+        List<KospiStockIndex> kospiStockIndices = kospiStockIndexRepository.findAll();
+        verifyExistsData(kospiStockIndices);
         
         log.info("KOSPI-stocks/index");
         
-        return kospiStockMapper.kospiStockIndicesToResponseDtos(theMostRecentStockIndices);
+        return kospiStockMapper.kospiStockIndicesToResponseDtos(kospiStockIndices);
     }
     
+    
     public List<KospiStockDto.ListResponse> getKospiStockLists() {
-        List<KospiStockList> foundLists = kospiStockListRepository.findAll();
-        verifyExistsData(foundLists);
-        
-        String theMostRecentBasDt = foundLists.get(0).getBasDt();
-        List<KospiStockList> theMostRecentStockLists = foundLists.stream()
-                .filter(e -> e.getBasDt().equals(theMostRecentBasDt))
-                .collect(Collectors.toList());
+        List<KospiStockList> kospiStockLists = kospiStockListRepository.findAll();
+        verifyExistsData(kospiStockLists);
         
         log.info("KOSPI-stocks/list");
         
-        return kospiStockMapper.kospiStockListsToResponseDtos(theMostRecentStockLists);
+        return kospiStockMapper.kospiStockListsToResponseDtos(kospiStockLists);
     }
     
     private <T> void verifyExistsData(List<T> data) {

@@ -93,11 +93,19 @@ public class KospiStockIndexUpdater {
     }
     
     private void saveKospiStockIndices(JSONArray item) {
+        String latestDate = getLatestDate(item);
         for (long i = 0; i < item.size(); i++) {
             JSONObject jsonObject = (JSONObject) item.get((int) i);
-            KospiStockIndex kospiStockIndex = createKospiStockIndexFromJson(jsonObject, i + 1);
-            kospiStockIndexRepository.save(kospiStockIndex);
+            if (jsonObject.get("basDt").equals(latestDate)) {
+                KospiStockIndex kospiStockIndex = createKospiStockIndexFromJson(jsonObject, i + 1);
+                kospiStockIndexRepository.save(kospiStockIndex);
+            }
         }
+    }
+    
+    private String getLatestDate(JSONArray item) {
+        JSONObject firstItem = (JSONObject) item.get(0);
+        return (String) firstItem.get("basDt");
     }
     
     private KospiStockIndex createKospiStockIndexFromJson(JSONObject jsonObject, long id) {
