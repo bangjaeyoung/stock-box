@@ -3,7 +3,9 @@ package mainproject.stocksite.domain.stock.overall.kospi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.cache.CacheService;
+import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockList;
+import mainproject.stocksite.domain.stock.overall.kospi.mapper.KospiStockMapper;
 import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockListRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -26,7 +29,7 @@ import javax.annotation.PostConstruct;
 public class KospiStockListUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPI Stock Lists: ";
+    private static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPIStockLists: ";
     private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
     private static final int NUM_OF_ROWS = 1000;
     private static final int PAGE_NO = 1;
@@ -35,6 +38,7 @@ public class KospiStockListUpdater {
     private final CacheService cacheService;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
+    private final KospiStockMapper kospiStockMapper;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
@@ -44,6 +48,9 @@ public class KospiStockListUpdater {
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
+        
+        List<KospiStockDto.ListResponse> responseDtos = getListResponses();
+        cacheService.saveCacheValue(KOSPI_STOCK_LISTS_CACHE_KEY, responseDtos);
     }
     
     public void deleteKospiStockLists() {
@@ -120,5 +127,10 @@ public class KospiStockListUpdater {
                 .lstgStCnt((String) jsonObject.get("lstgStCnt"))
                 .mrktTotAmt((String) jsonObject.get("mrktTotAmt"))
                 .build();
+    }
+    
+    private List<KospiStockDto.ListResponse> getListResponses() {
+        List<KospiStockList> kospiStockLists = kospiStockListRepository.findAll();
+        return kospiStockMapper.kospiStockListsToResponseDtos(kospiStockLists);
     }
 }

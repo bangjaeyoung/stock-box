@@ -3,7 +3,9 @@ package mainproject.stocksite.domain.stock.overall.kosdaq.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.cache.CacheService;
+import mainproject.stocksite.domain.stock.overall.kosdaq.dto.KosdaqStockDto;
 import mainproject.stocksite.domain.stock.overall.kosdaq.entity.KosdaqStockList;
+import mainproject.stocksite.domain.stock.overall.kosdaq.mapper.KosdaqStockMapper;
 import mainproject.stocksite.domain.stock.overall.kosdaq.repository.KosdaqStockListRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
@@ -33,7 +36,7 @@ import javax.annotation.PostConstruct;
 public class KosdaqStockListUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSDAQ_STOCK_LISTS_CACHE_KEY = "KOSDAQ Stock Lists: ";
+    private static final String KOSDAQ_STOCK_LISTS_CACHE_KEY = "KOSDAQStockLists: ";
     private static final String KOSDAQ_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
     private static final int NUM_OF_ROWS = 2000;
     private static final int PAGE_NO = 1;
@@ -42,6 +45,7 @@ public class KosdaqStockListUpdater {
     private final CacheService cacheService;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
+    private final KosdaqStockMapper kosdaqStockMapper;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
@@ -51,6 +55,9 @@ public class KosdaqStockListUpdater {
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
+        
+        List<KosdaqStockDto.ListResponse> responseDtos = getListResponses();
+        cacheService.saveCacheValue(KOSDAQ_STOCK_LISTS_CACHE_KEY, responseDtos);
     }
     
     public void deleteKosdaqStockLists() {
@@ -127,5 +134,10 @@ public class KosdaqStockListUpdater {
                 .lstgStCnt((String) jsonObject.get("lstgStCnt"))
                 .mrktTotAmt((String) jsonObject.get("mrktTotAmt"))
                 .build();
+    }
+    
+    private List<KosdaqStockDto.ListResponse> getListResponses() {
+        List<KosdaqStockList> kosdaqStockLists = kosdaqStockListRepository.findAll();
+        return kosdaqStockMapper.kosdaqStockListsToResponseDtos(kosdaqStockLists);
     }
 }

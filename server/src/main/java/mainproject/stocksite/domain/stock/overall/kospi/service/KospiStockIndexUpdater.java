@@ -3,7 +3,9 @@ package mainproject.stocksite.domain.stock.overall.kospi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.cache.CacheService;
+import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockIndex;
+import mainproject.stocksite.domain.stock.overall.kospi.mapper.KospiStockMapper;
 import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockIndexRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kospi.service
@@ -33,7 +36,7 @@ import javax.annotation.PostConstruct;
 public class KospiStockIndexUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSPI_STOCK_INDICES_CACHE_KEY = "KOSPI Stock Indices: ";
+    private static final String KOSPI_STOCK_INDICES_CACHE_KEY = "KOSPIStockIndices: ";
     private static final String KOSPI_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
     private static final int NUM_OF_ROWS = 5;
     private static final int PAGE_NO = 1;
@@ -42,6 +45,7 @@ public class KospiStockIndexUpdater {
     private final CacheService cacheService;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
+    private final KospiStockMapper kospiStockMapper;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
@@ -51,6 +55,9 @@ public class KospiStockIndexUpdater {
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
+        
+        List<KospiStockDto.IndexResponse> responseDtos = getIndexResponses();
+        cacheService.saveCacheValue(KOSPI_STOCK_INDICES_CACHE_KEY, responseDtos);
     }
     
     public void deleteKospiStockIndices() {
@@ -133,5 +140,10 @@ public class KospiStockIndexUpdater {
                 .basPntm((String) jsonObject.get("basPntm"))
                 .basIdx((String) jsonObject.get("basIdx"))
                 .build();
+    }
+    
+    private List<KospiStockDto.IndexResponse> getIndexResponses() {
+        List<KospiStockIndex> kospiStockIndices = kospiStockIndexRepository.findAll();
+        return kospiStockMapper.kospiStockIndicesToResponseDtos(kospiStockIndices);
     }
 }
