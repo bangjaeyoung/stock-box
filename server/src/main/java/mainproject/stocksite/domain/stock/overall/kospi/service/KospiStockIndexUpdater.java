@@ -1,6 +1,7 @@
 package mainproject.stocksite.domain.stock.overall.kospi.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockIndex;
 import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockIndexRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
@@ -8,7 +9,7 @@ import mainproject.stocksite.global.config.OpenApiSecretInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.springframework.http.ResponseEntity;
+import org.json.simple.parser.ParseException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,36 +25,44 @@ import javax.annotation.PostConstruct;
  * Date: 2024-01-14
  * Description:
  */
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class KospiStockIndexUpdater {
+    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+    private static final String TIME_ZONE = "Asia/Seoul";
     private static final String KOSPI_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
+    private static final int NUM_OF_ROWS = 5;
+    private static final int PAGE_NO = 1;
     
+    private final KospiStockIndexRepository kospiStockIndexRepository;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
-    private final KospiStockIndexRepository kospiStockIndexRepository;
     
-    // 매일 오전 11시 5분 15초에 KOSPI 주가지수시세 데이터 저장
     @PostConstruct
-    @Scheduled(cron = "15 5 11 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockIndices() {
-        String requestUrl = buildApiUrl();
-        ResponseEntity<String> responseData = restTemplate.getForEntity(requestUrl, String.class);
-        processResponseData(responseData.getBody());
+        deleteKospiStockIndices();
+        
+        String responseData = requestToOpenApiServer();
+        processResponseData(responseData);
     }
     
-    // 매일 오전 11시 5분에 KOSPI 주가지수시세 데이터 삭제
-    @Scheduled(cron = "0 5 11 * * *", zone = "Asia/Seoul")
     public void deleteKospiStockIndices() {
         kospiStockIndexRepository.deleteAll();
+    }
+    
+    private String requestToOpenApiServer() {
+        String requestUrl = buildApiUrl();
+        return restTemplate.getForEntity(requestUrl, String.class).getBody();
     }
     
     private String buildApiUrl() {
         return UriComponentsBuilder.fromHttpUrl(KOSPI_STOCK_INDEX_API_URL)
                 .queryParam("serviceKey", openApiSecretInfo.getServiceKey())
-                .queryParam("numOfRows", 5)
-                .queryParam("pageNo", 1)
+                .queryParam("numOfRows", NUM_OF_ROWS)
+                .queryParam("pageNo", PAGE_NO)
                 .queryParam("resultType", "json")
                 .queryParam("beginBasDt", DateUtils.getFiveDaysAgoToNow())
                 .queryParam("idxNm", "코스피")
@@ -61,18 +70,22 @@ public class KospiStockIndexUpdater {
                 .toString();
     }
     
-    private void processResponseData(String responseDataBody) {
+    private void processResponseData(String responseData) {
         try {
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) jsonParser.parse(responseDataBody);
-            JSONObject response = (JSONObject) jsonObject.get("response");
-            JSONObject body = (JSONObject) response.get("body");
-            JSONObject items = (JSONObject) body.get("items");
-            JSONArray item = (JSONArray) items.get("item");
+            JSONArray item = getJsonArray(responseData);
             saveKospiStockIndices(item);
         } catch (Exception requestOpenApiError) {
-            requestOpenApiError.printStackTrace();
+            log.error("Error during Open API request", requestOpenApiError);
         }
+    }
+    
+    private JSONArray getJsonArray(String responseData) throws ParseException {
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(responseData);
+        JSONObject response = (JSONObject) jsonObject.get("response");
+        JSONObject body = (JSONObject) response.get("body");
+        JSONObject items = (JSONObject) body.get("items");
+        return (JSONArray) items.get("item");
     }
     
     private void saveKospiStockIndices(JSONArray item) {
