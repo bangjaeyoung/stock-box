@@ -2,6 +2,7 @@ package mainproject.stocksite.domain.stock.overall.kospi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mainproject.stocksite.domain.stock.overall.cache.CacheService;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockList;
 import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockListRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
@@ -25,11 +26,13 @@ import javax.annotation.PostConstruct;
 public class KospiStockListUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
+    private static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPI Stock Lists: ";
     private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
     private static final int NUM_OF_ROWS = 2000;
     private static final int PAGE_NO = 1;
     
     private final KospiStockListRepository kospiStockListRepository;
+    private final CacheService cacheService;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
     
@@ -37,6 +40,7 @@ public class KospiStockListUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockLists() {
         deleteKospiStockLists();
+        cacheService.deleteCacheByKey(KOSPI_STOCK_LISTS_CACHE_KEY);
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);

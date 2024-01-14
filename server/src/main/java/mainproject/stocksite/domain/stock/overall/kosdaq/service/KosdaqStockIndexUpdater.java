@@ -2,6 +2,7 @@ package mainproject.stocksite.domain.stock.overall.kosdaq.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mainproject.stocksite.domain.stock.overall.cache.CacheService;
 import mainproject.stocksite.domain.stock.overall.kosdaq.entity.KosdaqStockIndex;
 import mainproject.stocksite.domain.stock.overall.kosdaq.repository.KosdaqStockIndexRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
@@ -10,6 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +34,14 @@ import javax.annotation.PostConstruct;
 public class KosdaqStockIndexUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
+    private static final String KOSDAQ_STOCK_INDICES_CACHE_KEY = "KOSDAQ Stock Indices: ";
     private static final String KOSDAQ_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
     private static final int NUM_OF_ROWS = 5;
     private static final int PAGE_NO = 1;
     
     private final KosdaqStockIndexRepository kosdaqStockIndexRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final CacheService cacheService;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
     
@@ -44,6 +49,7 @@ public class KosdaqStockIndexUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKosdaqStockIndices() {
         deleteKosdaqStockIndices();
+        cacheService.deleteCacheByKey(KOSDAQ_STOCK_INDICES_CACHE_KEY);
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
