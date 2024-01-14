@@ -22,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSDAQ_STOCK_INDICES_CACHE_KEY;
+
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
  * FileName: KosdaqStockIndexUpdater
@@ -36,7 +38,6 @@ import java.util.List;
 public class KosdaqStockIndexUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSDAQ_STOCK_INDICES_CACHE_KEY = "KOSDAQStockIndices: ";
     private static final String KOSDAQ_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
     private static final int NUM_OF_ROWS = 5;
     private static final int PAGE_NO = 1;
@@ -47,7 +48,7 @@ public class KosdaqStockIndexUpdater {
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KosdaqStockMapper kosdaqStockMapper;
     
-    @PostConstruct
+//    @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKosdaqStockIndices() {
         deleteKosdaqStockIndices();

@@ -18,8 +18,20 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 @RequiredArgsConstructor
 public class CacheService {
+    public static final String KOSDAQ_STOCK_INDICES_CACHE_KEY = "KOSDAQStockIndices: ";
+    public static final String KOSDAQ_STOCK_LISTS_CACHE_KEY = "KOSDAQStockLists: ";
+    public static final String KOSPI_STOCK_INDICES_CACHE_KEY = "KOSPIStockIndices: ";
+    public static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPIStockLists: ";
     
     private final RedisTemplate<String, Object> redisTemplate;
+    
+    public Object getCacheValueByKey(String cacheKey) {
+        return redisTemplate.opsForValue().get(cacheKey);
+    }
+    
+    public boolean hasCacheValueByKey(String cacheKey) {
+        return getCacheValueByKey(cacheKey) != null;
+    }
     
     public void deleteCacheByKey(String cacheKey) {
         redisTemplate.delete(cacheKey);

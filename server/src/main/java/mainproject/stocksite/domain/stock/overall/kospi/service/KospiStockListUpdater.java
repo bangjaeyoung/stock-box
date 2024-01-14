@@ -22,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSPI_STOCK_LISTS_CACHE_KEY;
+
 @Slf4j
 @Service
 @Transactional
@@ -29,7 +31,6 @@ import java.util.List;
 public class KospiStockListUpdater {
     private static final String CRON_EXPRESSION = "0 0 16 * * *";
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSPI_STOCK_LISTS_CACHE_KEY = "KOSPIStockLists: ";
     private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
     private static final int NUM_OF_ROWS = 1000;
     private static final int PAGE_NO = 1;
@@ -40,7 +41,7 @@ public class KospiStockListUpdater {
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KospiStockMapper kospiStockMapper;
     
-    @PostConstruct
+//    @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockLists() {
         deleteKospiStockLists();
