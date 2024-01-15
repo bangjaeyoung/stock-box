@@ -48,7 +48,7 @@ public class KosdaqStockListUpdater {
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KosdaqStockMapper kosdaqStockMapper;
     
-//    @PostConstruct
+    @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKosdaqStockLists() {
         deleteKosdaqStockLists();

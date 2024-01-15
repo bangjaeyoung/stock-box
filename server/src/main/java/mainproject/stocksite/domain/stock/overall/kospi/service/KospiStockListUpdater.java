@@ -41,7 +41,7 @@ public class KospiStockListUpdater {
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KospiStockMapper kospiStockMapper;
     
-//    @PostConstruct
+    @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockLists() {
         deleteKospiStockLists();
