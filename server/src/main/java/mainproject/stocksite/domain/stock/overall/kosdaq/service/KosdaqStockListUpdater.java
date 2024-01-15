@@ -23,12 +23,14 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static mainproject.stocksite.domain.stock.overall.kosdaq.service.KosdaqStockService.KOSDAQ_STOCK_LIST_CACHE_KEY;
+
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
  * FileName: KosdaqStockListUpdater
  * Author: bangjaeyoung
  * Date: 2024-01-14
- * Description:
+ * Description: KOSDAQ 주식시세 Open API 호출 및 데이터 저장 + 캐시 데이터 저장(스케쥴링)
  */
 @Slf4j
 @Service
@@ -51,13 +53,12 @@ public class KosdaqStockListUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKosdaqStockLists() {
         deleteKosdaqStockLists();
-        redisTemplate.delete("KOSDAQStockLists: ");
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
         
         List<KosdaqStockDto.ListResponse> responseDtos = getListResponses();
-        redisTemplate.opsForValue().set("KOSDAQStockLists: ", responseDtos, 24, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(KOSDAQ_STOCK_LIST_CACHE_KEY, responseDtos, 24, TimeUnit.HOURS);
     }
     
     public void deleteKosdaqStockLists() {

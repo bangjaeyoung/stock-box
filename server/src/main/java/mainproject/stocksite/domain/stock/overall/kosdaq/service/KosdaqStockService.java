@@ -22,13 +22,15 @@ import java.util.concurrent.TimeUnit;
  * FileName: KosdaqStockService
  * Author: bangjaeyoung
  * Date: 2024-01-13
- * Description:
+ * Description: KOSDAQ 주식 데이터 비즈니스 로직 + 캐시 체크 로직
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class KosdaqStockService {
+    public static final String KOSDAQ_STOCK_INDEX_CACHE_KEY = "KOSDAQStockIndices: ";
+    public static final String KOSDAQ_STOCK_LIST_CACHE_KEY = "KOSDAQStockLists: ";
     
     private final KosdaqStockIndexRepository kosdaqStockIndexRepository;
     private final KosdaqStockListRepository kosdaqStockListRepository;
@@ -37,29 +39,29 @@ public class KosdaqStockService {
     private final KosdaqStockMapper kosdaqStockMapper;
     
     public List<KosdaqStockDto.IndexResponse> getKosdaqStockIndices() {
-        if (Boolean.TRUE.equals(indexRedisTemplate.hasKey("KOSDAQStockIndices: "))) {
-            return indexRedisTemplate.opsForValue().get("KOSDAQStockIndices: ");
+        if (Boolean.TRUE.equals(indexRedisTemplate.hasKey(KOSDAQ_STOCK_INDEX_CACHE_KEY))) {
+            return indexRedisTemplate.opsForValue().get(KOSDAQ_STOCK_INDEX_CACHE_KEY);
         }
         
         List<KosdaqStockIndex> kosdaqStockIndices = kosdaqStockIndexRepository.findAll();
         verifyExistsData(kosdaqStockIndices);
         
         List<KosdaqStockDto.IndexResponse> indexResponses = kosdaqStockMapper.kosdaqStockIndicesToResponseDtos(kosdaqStockIndices);
-        indexRedisTemplate.opsForValue().set("KOSDAQStockIndices: ", indexResponses, 24, TimeUnit.HOURS);
+        indexRedisTemplate.opsForValue().set(KOSDAQ_STOCK_INDEX_CACHE_KEY, indexResponses, 24, TimeUnit.HOURS);
         
         return indexResponses;
     }
     
     public List<KosdaqStockDto.ListResponse> getKosdaqStockLists() {
-        if (Boolean.TRUE.equals(listRedisTemplate.hasKey("KOSDAQStockLists: "))) {
-            return listRedisTemplate.opsForValue().get("KOSDAQStockLists: ");
+        if (Boolean.TRUE.equals(listRedisTemplate.hasKey(KOSDAQ_STOCK_LIST_CACHE_KEY))) {
+            return listRedisTemplate.opsForValue().get(KOSDAQ_STOCK_LIST_CACHE_KEY);
         }
         
         List<KosdaqStockList> kosdaqStockLists = kosdaqStockListRepository.findAll();
         verifyExistsData(kosdaqStockLists);
         
         List<KosdaqStockDto.ListResponse> listResponses = kosdaqStockMapper.kosdaqStockListsToResponseDtos(kosdaqStockLists);
-        listRedisTemplate.opsForValue().set("KOSDAQStockLists: ", listResponses, 24, TimeUnit.HOURS);
+        listRedisTemplate.opsForValue().set(KOSDAQ_STOCK_LIST_CACHE_KEY, listResponses, 24, TimeUnit.HOURS);
         
         return listResponses;
     }

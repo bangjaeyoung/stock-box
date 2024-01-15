@@ -22,13 +22,15 @@ import java.util.concurrent.TimeUnit;
  * FileName: KospiStockService
  * Author: bangjaeyoung
  * Date: 2024-01-14
- * Description:
+ * Description: KOSPI 주식 데이터 비즈니스 로직 + 캐시 체크 로직
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class KospiStockService {
+    public static final String KOSPI_STOCK_INDEX_CACHE_KEY = "KOSPIStockIndices: ";
+    public static final String KOSPI_STOCK_LIST_CACHE_KEY = "KOSPIStockLists: ";
     
     private final KospiStockIndexRepository kospiStockIndexRepository;
     private final KospiStockListRepository kospiStockListRepository;
@@ -37,30 +39,30 @@ public class KospiStockService {
     private final KospiStockMapper kospiStockMapper;
     
     public List<KospiStockDto.IndexResponse> getKospiStockIndices() {
-        if (Boolean.TRUE.equals(indexRedisTemplate.hasKey("KOSPIStockIndices :"))) {
-            return indexRedisTemplate.opsForValue().get("KOSPIStockIndices :");
+        if (Boolean.TRUE.equals(indexRedisTemplate.hasKey(KOSPI_STOCK_INDEX_CACHE_KEY))) {
+            return indexRedisTemplate.opsForValue().get(KOSPI_STOCK_INDEX_CACHE_KEY);
         }
         
         List<KospiStockIndex> kospiStockIndices = kospiStockIndexRepository.findAll();
         verifyExistsData(kospiStockIndices);
         
         List<KospiStockDto.IndexResponse> indexResponses = kospiStockMapper.kospiStockIndicesToResponseDtos(kospiStockIndices);
-        indexRedisTemplate.opsForValue().set("KOSPIStockIndices :", indexResponses, 24, TimeUnit.HOURS);
+        indexRedisTemplate.opsForValue().set(KOSPI_STOCK_INDEX_CACHE_KEY, indexResponses, 24, TimeUnit.HOURS);
         
         return indexResponses;
     }
     
     
     public List<KospiStockDto.ListResponse> getKospiStockLists() {
-        if (Boolean.TRUE.equals(listRedisTemplate.hasKey("KOSPIStockLists: "))) {
-            return listRedisTemplate.opsForValue().get("KOSPIStockLists: ");
+        if (Boolean.TRUE.equals(listRedisTemplate.hasKey(KOSPI_STOCK_LIST_CACHE_KEY))) {
+            return listRedisTemplate.opsForValue().get(KOSPI_STOCK_LIST_CACHE_KEY);
         }
         
         List<KospiStockList> kospiStockLists = kospiStockListRepository.findAll();
         verifyExistsData(kospiStockLists);
         
         List<KospiStockDto.ListResponse> listResponses = kospiStockMapper.kospiStockListsToResponseDtos(kospiStockLists);
-        listRedisTemplate.opsForValue().set("KOSPIStockLists: ", listResponses, 24, TimeUnit.HOURS);
+        listRedisTemplate.opsForValue().set(KOSPI_STOCK_LIST_CACHE_KEY, listResponses, 24, TimeUnit.HOURS);
         
         return listResponses;
     }

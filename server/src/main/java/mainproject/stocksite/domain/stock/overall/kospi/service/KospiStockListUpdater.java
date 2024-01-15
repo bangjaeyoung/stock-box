@@ -23,6 +23,15 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static mainproject.stocksite.domain.stock.overall.kospi.service.KospiStockService.KOSPI_STOCK_LIST_CACHE_KEY;
+
+/**
+ * PackageName: mainproject.stocksite.domain.stock.overall.kospi.service
+ * FileName: KospiStockListUpdater
+ * Author: bangjaeyoung
+ * Date: 2024-01-15
+ * Description: KOSPI 주식시세 Open API 호출 및 데이터 저장 + 캐시 데이터 저장(스케쥴링)
+ */
 @Slf4j
 @Service
 @Transactional
@@ -44,13 +53,12 @@ public class KospiStockListUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockLists() {
         deleteKospiStockLists();
-        redisTemplate.delete("KOSPIStockLists: ");
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
         
         List<KospiStockDto.ListResponse> responseDtos = getListResponses();
-        redisTemplate.opsForValue().set("KOSPIStockLists :", responseDtos, 24, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(KOSPI_STOCK_LIST_CACHE_KEY, responseDtos, 24, TimeUnit.HOURS);
     }
     
     public void deleteKospiStockLists() {
