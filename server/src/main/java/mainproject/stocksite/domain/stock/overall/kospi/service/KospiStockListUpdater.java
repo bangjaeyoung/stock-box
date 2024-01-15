@@ -2,7 +2,6 @@ package mainproject.stocksite.domain.stock.overall.kospi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mainproject.stocksite.domain.stock.overall.cache.CacheService;
 import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockList;
 import mainproject.stocksite.domain.stock.overall.kospi.mapper.KospiStockMapper;
@@ -13,6 +12,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
-
-import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSPI_STOCK_LISTS_CACHE_KEY;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -36,7 +35,7 @@ public class KospiStockListUpdater {
     private static final int PAGE_NO = 1;
     
     private final KospiStockListRepository kospiStockListRepository;
-    private final CacheService cacheService;
+    private final RedisTemplate<String, List<KospiStockDto.ListResponse>> redisTemplate;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KospiStockMapper kospiStockMapper;
@@ -45,13 +44,13 @@ public class KospiStockListUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKospiStockLists() {
         deleteKospiStockLists();
-        cacheService.deleteCacheByKey(KOSPI_STOCK_LISTS_CACHE_KEY);
+        redisTemplate.delete("KOSPIStockLists: ");
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
         
         List<KospiStockDto.ListResponse> responseDtos = getListResponses();
-        cacheService.saveCacheValue(KOSPI_STOCK_LISTS_CACHE_KEY, responseDtos);
+        redisTemplate.opsForValue().set("KOSPIStockLists :", responseDtos, 24, TimeUnit.HOURS);
     }
     
     public void deleteKospiStockLists() {

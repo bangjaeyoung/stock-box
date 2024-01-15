@@ -2,7 +2,6 @@ package mainproject.stocksite.domain.stock.overall.kospi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mainproject.stocksite.domain.stock.overall.cache.CacheService;
 import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockIndex;
 import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockList;
@@ -11,13 +10,12 @@ import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockInd
 import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockListRepository;
 import mainproject.stocksite.global.exception.BusinessLogicException;
 import mainproject.stocksite.global.exception.ExceptionCode;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSPI_STOCK_INDICES_CACHE_KEY;
-import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSPI_STOCK_LISTS_CACHE_KEY;
+import java.util.concurrent.TimeUnit;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kospi.service
@@ -34,34 +32,35 @@ public class KospiStockService {
     
     private final KospiStockIndexRepository kospiStockIndexRepository;
     private final KospiStockListRepository kospiStockListRepository;
-    private final CacheService cacheService;
+    private final RedisTemplate<String, List<KospiStockDto.IndexResponse>> indexRedisTemplate;
+    private final RedisTemplate<String, List<KospiStockDto.ListResponse>> listRedisTemplate;
     private final KospiStockMapper kospiStockMapper;
     
     public List<KospiStockDto.IndexResponse> getKospiStockIndices() {
-        if (cacheService.hasCacheValueByKey(KOSPI_STOCK_INDICES_CACHE_KEY)) {
-            return (List<KospiStockDto.IndexResponse>) cacheService.getCacheValueByKey(KOSPI_STOCK_INDICES_CACHE_KEY);
+        if (Boolean.TRUE.equals(indexRedisTemplate.hasKey("KOSPIStockIndices :"))) {
+            return indexRedisTemplate.opsForValue().get("KOSPIStockIndices :");
         }
         
         List<KospiStockIndex> kospiStockIndices = kospiStockIndexRepository.findAll();
         verifyExistsData(kospiStockIndices);
         
         List<KospiStockDto.IndexResponse> indexResponses = kospiStockMapper.kospiStockIndicesToResponseDtos(kospiStockIndices);
-        cacheService.saveCacheValue(KOSPI_STOCK_INDICES_CACHE_KEY, indexResponses);
+        indexRedisTemplate.opsForValue().set("KOSPIStockIndices :", indexResponses, 24, TimeUnit.HOURS);
         
         return indexResponses;
     }
     
     
     public List<KospiStockDto.ListResponse> getKospiStockLists() {
-        if (cacheService.hasCacheValueByKey(KOSPI_STOCK_LISTS_CACHE_KEY)) {
-            return (List<KospiStockDto.ListResponse>) cacheService.getCacheValueByKey(KOSPI_STOCK_LISTS_CACHE_KEY);
+        if (Boolean.TRUE.equals(listRedisTemplate.hasKey("KOSPIStockLists: "))) {
+            return listRedisTemplate.opsForValue().get("KOSPIStockLists: ");
         }
         
         List<KospiStockList> kospiStockLists = kospiStockListRepository.findAll();
         verifyExistsData(kospiStockLists);
         
         List<KospiStockDto.ListResponse> listResponses = kospiStockMapper.kospiStockListsToResponseDtos(kospiStockLists);
-        cacheService.saveCacheValue(KOSPI_STOCK_LISTS_CACHE_KEY, listResponses);
+        listRedisTemplate.opsForValue().set("KOSPIStockLists: ", listResponses, 24, TimeUnit.HOURS);
         
         return listResponses;
     }

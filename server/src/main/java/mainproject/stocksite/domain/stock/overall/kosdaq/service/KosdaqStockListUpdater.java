@@ -2,7 +2,6 @@ package mainproject.stocksite.domain.stock.overall.kosdaq.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mainproject.stocksite.domain.stock.overall.cache.CacheService;
 import mainproject.stocksite.domain.stock.overall.kosdaq.dto.KosdaqStockDto;
 import mainproject.stocksite.domain.stock.overall.kosdaq.entity.KosdaqStockList;
 import mainproject.stocksite.domain.stock.overall.kosdaq.mapper.KosdaqStockMapper;
@@ -13,6 +12,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
-
-import static mainproject.stocksite.domain.stock.overall.cache.CacheService.KOSDAQ_STOCK_LISTS_CACHE_KEY;
+import java.util.concurrent.TimeUnit;
 
 /**
  * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
@@ -43,7 +42,7 @@ public class KosdaqStockListUpdater {
     private static final int PAGE_NO = 1;
     
     private final KosdaqStockListRepository kosdaqStockListRepository;
-    private final CacheService cacheService;
+    private final RedisTemplate<String, List<KosdaqStockDto.ListResponse>> redisTemplate;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
     private final KosdaqStockMapper kosdaqStockMapper;
@@ -52,13 +51,13 @@ public class KosdaqStockListUpdater {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void updateKosdaqStockLists() {
         deleteKosdaqStockLists();
-        cacheService.deleteCacheByKey(KOSDAQ_STOCK_LISTS_CACHE_KEY);
+        redisTemplate.delete("KOSDAQStockLists: ");
         
         String responseData = requestToOpenApiServer();
         processResponseData(responseData);
         
         List<KosdaqStockDto.ListResponse> responseDtos = getListResponses();
-        cacheService.saveCacheValue(KOSDAQ_STOCK_LISTS_CACHE_KEY, responseDtos);
+        redisTemplate.opsForValue().set("KOSDAQStockLists: ", responseDtos, 24, TimeUnit.HOURS);
     }
     
     public void deleteKosdaqStockLists() {
