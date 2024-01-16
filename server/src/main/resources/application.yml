@@ -1,17 +1,37 @@
 spring:
-  jpa:
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-  datasource:
-    url: jdbc:mysql://main-32.cd7gr6hr0ucd.ap-northeast-2.rds.amazonaws.com:13306/main32?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
-    username: admin
-    password: mainproject32
-    driver-class-name: com.mysql.cj.jdbc.Driver
   profiles:
     include: secret
+
+  jpa:
+#    database: mysql
+#    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: create
+#    show-sql: true
+    properties:
+      hibernate:
+#        format_sql: true
+
+  redis:
+    host: localhost
+    port: 6379
+
+  datasource:
+#    url: jdbc:mysql://main-32.cd7gr6hr0ucd.ap-northeast-2.rds.amazonaws.com:13306/main32?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC
+#    username: admin
+#    password: mainproject32
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # test용
+    url: jdbc:h2:mem:~/stockbox
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
   security:
     oauth2:
       client:
@@ -23,12 +43,18 @@ spring:
             scope:
               - email
               - profile
+              -
 mail:
   address:
     admin: admin@gmail.com
+
 jwt:
   key:
   access-token-expiration-minutes: 40
   refresh-token-expiration-minutes: 420
+
 config:
   domain: http://main-32.s3-website.ap-northeast-2.amazonaws.com
+
+logging.level:
+  org.hibernate.SQL: DEBUG
