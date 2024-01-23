@@ -37,7 +37,7 @@ import static mainproject.stocksite.domain.stock.overall.kospi.service.KospiStoc
 @Transactional
 @RequiredArgsConstructor
 public class KospiStockListUpdater {
-    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+    private static final String CRON_EXPRESSION = "0 0 13 * * *";   // 오후 1시
     private static final String TIME_ZONE = "Asia/Seoul";
     private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
     private static final int NUM_OF_ROWS = 1000;

@@ -37,7 +37,7 @@ import static mainproject.stocksite.domain.stock.overall.kosdaq.service.KosdaqSt
 @Transactional
 @RequiredArgsConstructor
 public class KosdaqStockIndexUpdater {
-    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+    private static final String CRON_EXPRESSION = "0 0 13 * * *";   // 오후 1시
     private static final String TIME_ZONE = "Asia/Seoul";
     private static final String KOSDAQ_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
     private static final int NUM_OF_ROWS = 5;
