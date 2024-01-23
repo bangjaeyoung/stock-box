@@ -45,7 +45,8 @@
 </br>
 
 ## 4. ERD 설계
-<img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/929dcc70-8ae0-441d-a554-996cde977dd0" width= 1200 height=600>
+<img width="977" alt="image" src="https://github.com/bangjaeyoung/stock-box/assets/80241053/fc655348-85cc-4609-8029-4861996170df">
+
 
 </br>
 </br>
