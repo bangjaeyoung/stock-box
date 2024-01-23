@@ -1,13 +1,12 @@
-package mainproject.stocksite.domain.stock.overall.kosdaq.service;
+package mainproject.stocksite.domain.stock.overall.kospi.cache.updater;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mainproject.stocksite.domain.stock.overall.kosdaq.dto.KosdaqStockDto;
-import mainproject.stocksite.domain.stock.overall.kosdaq.entity.KosdaqStockIndex;
-import mainproject.stocksite.domain.stock.overall.kosdaq.mapper.KosdaqStockMapper;
-import mainproject.stocksite.domain.stock.overall.kosdaq.repository.KosdaqStockIndexRepository;
+import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
+import mainproject.stocksite.global.exception.BusinessLogicException;
+import mainproject.stocksite.global.exception.ExceptionCode;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,48 +20,51 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static mainproject.stocksite.domain.stock.overall.kosdaq.service.KosdaqStockService.KOSDAQ_STOCK_INDEX_CACHE_KEY;
-
 /**
- * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
- * FileName: KosdaqStockIndexUpdater
+ * PackageName: mainproject.stocksite.domain.stock.overall.kospi.cache.updater
+ * FileName: KospiStockIndexUpdater
  * Author: bangjaeyoung
- * Date: 2024-01-14
- * Description: KOSDAQ 주가지수시세 Open API 호출 및 데이터 저장 + 캐시 데이터 저장(스케쥴링)
+ * Date: 2024-01-24
+ * Description: KOSPI 주가지수시세 Open API 호출 / 캐시 데이터 저장(스케쥴링)
  */
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class KosdaqStockIndexUpdater {
-    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+public class KospiStockIndexUpdater {
+    public static final String KOSPI_STOCK_INDEX_CACHE_KEY = "KOSPIStockIndices: ";
+    private static final String CRON_EXPRESSION = "0 0 13 * * *";   // 오후 1시
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSDAQ_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
+    private static final String KOSPI_STOCK_INDEX_API_URL = "http://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
     private static final int NUM_OF_ROWS = 5;
     private static final int PAGE_NO = 1;
     
-    private final KosdaqStockIndexRepository kosdaqStockIndexRepository;
-    private final RedisTemplate<String, List<KosdaqStockDto.IndexResponse>> redisTemplate;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
-    private final KosdaqStockMapper kosdaqStockMapper;
+    private final RedisTemplate<String, List<KospiStockDto.Index>> redisTemplate;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
-    public void updateKosdaqStockIndices() {
-        deleteKosdaqStockIndices();
-        
+    public List<KospiStockDto.Index> updateKospiStockIndices() {
         String responseData = requestToOpenApiServer();
-        processResponseData(responseData);
+        List<KospiStockDto.Index> indexDtos = transformDataToDto(responseData);
         
-        List<KosdaqStockDto.IndexResponse> responseDtos = getIndexResponses();
-        redisTemplate.opsForValue().set(KOSDAQ_STOCK_INDEX_CACHE_KEY, responseDtos, 24, TimeUnit.HOURS);
-    }
-    
-    private void deleteKosdaqStockIndices() {
-        kosdaqStockIndexRepository.deleteAll();
+        if (indexDtos == null) {
+            throw new BusinessLogicException(ExceptionCode.CANNOT_FOUND_STOCK_DATA);
+        }
+        
+        redisTemplate.opsForValue()
+                .set(
+                        KOSPI_STOCK_INDEX_CACHE_KEY,
+                        indexDtos,
+                        24,
+                        TimeUnit.HOURS
+                );
+        
+        return indexDtos;
     }
     
     private String requestToOpenApiServer() {
@@ -71,24 +73,26 @@ public class KosdaqStockIndexUpdater {
     }
     
     private String buildApiUrl() {
-        return UriComponentsBuilder.fromHttpUrl(KOSDAQ_STOCK_INDEX_API_URL)
+        return UriComponentsBuilder.fromHttpUrl(KOSPI_STOCK_INDEX_API_URL)
                 .queryParam("serviceKey", openApiSecretInfo.getServiceKey())
                 .queryParam("numOfRows", NUM_OF_ROWS)
                 .queryParam("pageNo", PAGE_NO)
                 .queryParam("resultType", "json")
                 .queryParam("beginBasDt", DateUtils.getFiveDaysAgoToNow())
-                .queryParam("idxNm", "코스닥")
+                .queryParam("idxNm", "코스피")
                 .build()
                 .toString();
     }
     
-    private void processResponseData(String responseData) {
+    private List<KospiStockDto.Index> transformDataToDto(String responseData) {
         try {
             JSONArray item = getJsonArray(responseData);
-            saveKosdaqStockIndices(item);
+            return filterRecentData(item);
         } catch (Exception requestOpenApiError) {
             log.error("Error during Open API request", requestOpenApiError);
         }
+        
+        return null;
     }
     
     private JSONArray getJsonArray(String responseData) throws ParseException {
@@ -97,28 +101,32 @@ public class KosdaqStockIndexUpdater {
         JSONObject response = (JSONObject) jsonObject.get("response");
         JSONObject body = (JSONObject) response.get("body");
         JSONObject items = (JSONObject) body.get("items");
+        
         return (JSONArray) items.get("item");
     }
     
-    private void saveKosdaqStockIndices(JSONArray item) {
-        String latestDate = getLatestDate(item);
-        for (long i = 0; i < item.size(); i++) {
-            JSONObject jsonObject = (JSONObject) item.get((int) i);
+    private List<KospiStockDto.Index> filterRecentData(JSONArray items) {
+        List<KospiStockDto.Index> kospiStockDtos = new CopyOnWriteArrayList<>();
+        String latestDate = getLatestDate(items);
+        
+        for (Object item : items) {
+            JSONObject jsonObject = (JSONObject) item;
+            
             if (jsonObject.get("basDt").equals(latestDate)) {
-                KosdaqStockIndex kosdaqStockIndex = createKosdaqStockIndexFromJson(jsonObject, i + 1);
-                kosdaqStockIndexRepository.save(kosdaqStockIndex);
+                kospiStockDtos.add(createKospiStockIndexFromJson(jsonObject));
             }
         }
+        
+        return kospiStockDtos;
     }
     
-    private String getLatestDate(JSONArray item) {
-        JSONObject firstItem = (JSONObject) item.get(0);
+    private String getLatestDate(JSONArray items) {
+        JSONObject firstItem = (JSONObject) items.get(0);
         return (String) firstItem.get("basDt");
     }
     
-    private KosdaqStockIndex createKosdaqStockIndexFromJson(JSONObject jsonObject, long id) {
-        return KosdaqStockIndex.builder()
-                .id(id)
+    private KospiStockDto.Index createKospiStockIndexFromJson(JSONObject jsonObject) {
+        return KospiStockDto.Index.builder()
                 .basDt((String) jsonObject.get("basDt"))
                 .idxNm((String) jsonObject.get("idxNm"))
                 .idxCsf((String) jsonObject.get("idxCsf"))
@@ -141,10 +149,5 @@ public class KosdaqStockIndexUpdater {
                 .basPntm((String) jsonObject.get("basPntm"))
                 .basIdx((String) jsonObject.get("basIdx"))
                 .build();
-    }
-    
-    private List<KosdaqStockDto.IndexResponse> getIndexResponses() {
-        List<KosdaqStockIndex> kosdaqStockIndices = kosdaqStockIndexRepository.findAll();
-        return kosdaqStockMapper.kosdaqStockIndicesToResponseDtos(kosdaqStockIndices);
     }
 }

@@ -1,13 +1,12 @@
-package mainproject.stocksite.domain.stock.overall.kospi.service;
+package mainproject.stocksite.domain.stock.overall.kospi.cache.updater;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.kospi.dto.KospiStockDto;
-import mainproject.stocksite.domain.stock.overall.kospi.entity.KospiStockList;
-import mainproject.stocksite.domain.stock.overall.kospi.mapper.KospiStockMapper;
-import mainproject.stocksite.domain.stock.overall.kospi.repository.KospiStockListRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
+import mainproject.stocksite.global.exception.BusinessLogicException;
+import mainproject.stocksite.global.exception.ExceptionCode;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,48 +20,51 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static mainproject.stocksite.domain.stock.overall.kospi.service.KospiStockService.KOSPI_STOCK_LIST_CACHE_KEY;
-
 /**
- * PackageName: mainproject.stocksite.domain.stock.overall.kospi.service
+ * PackageName: mainproject.stocksite.domain.stock.overall.kospi.cache.updater
  * FileName: KospiStockListUpdater
  * Author: bangjaeyoung
- * Date: 2024-01-15
- * Description: KOSPI 주식시세 Open API 호출 및 데이터 저장 + 캐시 데이터 저장(스케쥴링)
+ * Date: 2024-01-24
+ * Description: KOSPI 주식시세 Open API 호출 / 캐시 데이터 저장(스케쥴링)
  */
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class KospiStockListUpdater {
-    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+    public static final String KOSPI_STOCK_LIST_CACHE_KEY = "KOSPIStockLists: ";
+    public static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
+    public static final int NUM_OF_ROWS = 2000;
+    public static final int PAGE_NO = 1;
+    private static final String CRON_EXPRESSION = "0 0 13 * * *";   // 오후 1시
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSPI_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
-    private static final int NUM_OF_ROWS = 1000;
-    private static final int PAGE_NO = 1;
     
-    private final KospiStockListRepository kospiStockListRepository;
-    private final RedisTemplate<String, List<KospiStockDto.ListResponse>> redisTemplate;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
-    private final KospiStockMapper kospiStockMapper;
+    private final RedisTemplate<String, List<KospiStockDto.List>> redisTemplate;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
-    public void updateKospiStockLists() {
-        deleteKospiStockLists();
-        
+    public List<KospiStockDto.List> updateKospiStockLists() {
         String responseData = requestToOpenApiServer();
-        processResponseData(responseData);
+        List<KospiStockDto.List> listDtos = transformDataToDto(responseData);
         
-        List<KospiStockDto.ListResponse> responseDtos = getListResponses();
-        redisTemplate.opsForValue().set(KOSPI_STOCK_LIST_CACHE_KEY, responseDtos, 24, TimeUnit.HOURS);
-    }
-    
-    public void deleteKospiStockLists() {
-        kospiStockListRepository.deleteAll();
+        if (listDtos == null) {
+            throw new BusinessLogicException(ExceptionCode.CANNOT_FOUND_STOCK_DATA);
+        }
+        
+        redisTemplate.opsForValue()
+                .set(
+                        KOSPI_STOCK_LIST_CACHE_KEY,
+                        listDtos,
+                        24,
+                        TimeUnit.HOURS
+                );
+        
+        return listDtos;
     }
     
     private String requestToOpenApiServer() {
@@ -82,13 +84,15 @@ public class KospiStockListUpdater {
                 .toString();
     }
     
-    private void processResponseData(String responseData) {
+    private List<KospiStockDto.List> transformDataToDto(String responseData) {
         try {
             JSONArray item = getJsonArray(responseData);
-            saveKospiStockLists(item);
+            return filterRecentData(item);
         } catch (Exception requestOpenApiError) {
             log.error("Error during Open API request", requestOpenApiError);
         }
+        
+        return null;
     }
     
     private JSONArray getJsonArray(String responseData) throws ParseException {
@@ -100,15 +104,19 @@ public class KospiStockListUpdater {
         return (JSONArray) items.get("item");
     }
     
-    private void saveKospiStockLists(JSONArray item) {
-        String latestDate = getLatestDate(item);
-        for (long i = 0; i < item.size(); i++) {
-            JSONObject jsonObject = (JSONObject) item.get((int) i);
+    private List<KospiStockDto.List> filterRecentData(JSONArray items) {
+        List<KospiStockDto.List> kospiStockDtos = new CopyOnWriteArrayList<>();
+        String latestDate = getLatestDate(items);
+        
+        for (Object item : items) {
+            JSONObject jsonObject = (JSONObject) item;
+            
             if (jsonObject.get("basDt").equals(latestDate)) {
-                KospiStockList kospiStockList = createKospiStockListFromJson(jsonObject, i + 1);
-                kospiStockListRepository.save(kospiStockList);
+                kospiStockDtos.add(createKospiStockListFromJson(jsonObject));
             }
         }
+        
+        return kospiStockDtos;
     }
     
     private String getLatestDate(JSONArray item) {
@@ -116,9 +124,8 @@ public class KospiStockListUpdater {
         return (String) firstItem.get("basDt");
     }
     
-    private KospiStockList createKospiStockListFromJson(JSONObject jsonObject, long id) {
-        return KospiStockList.builder()
-                .id(id + 1)
+    private KospiStockDto.List createKospiStockListFromJson(JSONObject jsonObject) {
+        return KospiStockDto.List.builder()
                 .basDt((String) jsonObject.get("basDt"))
                 .srtnCd((String) jsonObject.get("srtnCd"))
                 .isinCd((String) jsonObject.get("isinCd"))
@@ -135,10 +142,5 @@ public class KospiStockListUpdater {
                 .lstgStCnt((String) jsonObject.get("lstgStCnt"))
                 .mrktTotAmt((String) jsonObject.get("mrktTotAmt"))
                 .build();
-    }
-    
-    private List<KospiStockDto.ListResponse> getListResponses() {
-        List<KospiStockList> kospiStockLists = kospiStockListRepository.findAll();
-        return kospiStockMapper.kospiStockListsToResponseDtos(kospiStockLists);
     }
 }

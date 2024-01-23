@@ -1,13 +1,12 @@
-package mainproject.stocksite.domain.stock.overall.kosdaq.service;
+package mainproject.stocksite.domain.stock.overall.kosdaq.cache.updater;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mainproject.stocksite.domain.stock.overall.kosdaq.dto.KosdaqStockDto;
-import mainproject.stocksite.domain.stock.overall.kosdaq.entity.KosdaqStockList;
-import mainproject.stocksite.domain.stock.overall.kosdaq.mapper.KosdaqStockMapper;
-import mainproject.stocksite.domain.stock.overall.kosdaq.repository.KosdaqStockListRepository;
 import mainproject.stocksite.domain.stock.overall.util.DateUtils;
 import mainproject.stocksite.global.config.OpenApiSecretInfo;
+import mainproject.stocksite.global.exception.BusinessLogicException;
+import mainproject.stocksite.global.exception.ExceptionCode;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,48 +20,51 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static mainproject.stocksite.domain.stock.overall.kosdaq.service.KosdaqStockService.KOSDAQ_STOCK_LIST_CACHE_KEY;
-
 /**
- * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.service
+ * PackageName: mainproject.stocksite.domain.stock.overall.kosdaq.cache.updater
  * FileName: KosdaqStockListUpdater
  * Author: bangjaeyoung
- * Date: 2024-01-14
- * Description: KOSDAQ 주식시세 Open API 호출 및 데이터 저장 + 캐시 데이터 저장(스케쥴링)
+ * Date: 2024-01-23
+ * Description: KOSDAQ 주식시세 Open API 호출 / 캐시 데이터 저장(스케쥴링)
  */
 @Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class KosdaqStockListUpdater {
-    private static final String CRON_EXPRESSION = "0 0 16 * * *";
+    public static final String KOSDAQ_STOCK_LIST_CACHE_KEY = "KOSDAQStockLists: ";
+    public static final String KOSDAQ_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
+    public static final int NUM_OF_ROWS = 2000;
+    public static final int PAGE_NO = 1;
+    private static final String CRON_EXPRESSION = "0 0 13 * * *";   // 오후 1시
     private static final String TIME_ZONE = "Asia/Seoul";
-    private static final String KOSDAQ_STOCK_LIST_API_URL = "http://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
-    private static final int NUM_OF_ROWS = 2000;
-    private static final int PAGE_NO = 1;
     
-    private final KosdaqStockListRepository kosdaqStockListRepository;
-    private final RedisTemplate<String, List<KosdaqStockDto.ListResponse>> redisTemplate;
     private final RestTemplate restTemplate;
     private final OpenApiSecretInfo openApiSecretInfo;
-    private final KosdaqStockMapper kosdaqStockMapper;
+    private final RedisTemplate<String, List<KosdaqStockDto.List>> redisTemplate;
     
     @PostConstruct
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
-    public void updateKosdaqStockLists() {
-        deleteKosdaqStockLists();
-        
+    public List<KosdaqStockDto.List> updateKosdaqStockLists() {
         String responseData = requestToOpenApiServer();
-        processResponseData(responseData);
+        List<KosdaqStockDto.List> listDtos = transformDataToDto(responseData);
         
-        List<KosdaqStockDto.ListResponse> responseDtos = getListResponses();
-        redisTemplate.opsForValue().set(KOSDAQ_STOCK_LIST_CACHE_KEY, responseDtos, 24, TimeUnit.HOURS);
-    }
-    
-    public void deleteKosdaqStockLists() {
-        kosdaqStockListRepository.deleteAll();
+        if (listDtos == null) {
+            throw new BusinessLogicException(ExceptionCode.CANNOT_FOUND_STOCK_DATA);
+        }
+        
+        redisTemplate.opsForValue()
+                .set(
+                        KOSDAQ_STOCK_LIST_CACHE_KEY,
+                        listDtos,
+                        24,
+                        TimeUnit.HOURS
+                );
+        
+        return listDtos;
     }
     
     private String requestToOpenApiServer() {
@@ -82,13 +84,15 @@ public class KosdaqStockListUpdater {
                 .toString();
     }
     
-    private void processResponseData(String responseData) {
+    private List<KosdaqStockDto.List> transformDataToDto(String responseData) {
         try {
             JSONArray item = getJsonArray(responseData);
-            saveKosdaqStockLists(item);
+            return filterRecentData(item);
         } catch (Exception requestOpenApiError) {
             log.error("Error during Open API request", requestOpenApiError);
         }
+        
+        return null;
     }
     
     private JSONArray getJsonArray(String responseData) throws ParseException {
@@ -100,15 +104,19 @@ public class KosdaqStockListUpdater {
         return (JSONArray) items.get("item");
     }
     
-    private void saveKosdaqStockLists(JSONArray item) {
-        String latestDate = getLatestDate(item);
-        for (long i = 0; i < item.size(); i++) {
-            JSONObject jsonObject = (JSONObject) item.get((int) i);
+    private List<KosdaqStockDto.List> filterRecentData(JSONArray items) {
+        List<KosdaqStockDto.List> kosdaqStockDtos = new CopyOnWriteArrayList<>();
+        String latestDate = getLatestDate(items);
+        
+        for (Object item : items) {
+            JSONObject jsonObject = (JSONObject) item;
+            
             if (jsonObject.get("basDt").equals(latestDate)) {
-                KosdaqStockList kosdaqStockList = createKosdaqStockListFromJson(jsonObject, i + 1);
-                kosdaqStockListRepository.save(kosdaqStockList);
+                kosdaqStockDtos.add(createKosdaqStockListFromJson(jsonObject));
             }
         }
+        
+        return kosdaqStockDtos;
     }
     
     private String getLatestDate(JSONArray item) {
@@ -116,9 +124,8 @@ public class KosdaqStockListUpdater {
         return (String) firstItem.get("basDt");
     }
     
-    private KosdaqStockList createKosdaqStockListFromJson(JSONObject jsonObject, long id) {
-        return KosdaqStockList.builder()
-                .id(id + 1)
+    private KosdaqStockDto.List createKosdaqStockListFromJson(JSONObject jsonObject) {
+        return KosdaqStockDto.List.builder()
                 .basDt((String) jsonObject.get("basDt"))
                 .srtnCd((String) jsonObject.get("srtnCd"))
                 .isinCd((String) jsonObject.get("isinCd"))
@@ -135,10 +142,5 @@ public class KosdaqStockListUpdater {
                 .lstgStCnt((String) jsonObject.get("lstgStCnt"))
                 .mrktTotAmt((String) jsonObject.get("mrktTotAmt"))
                 .build();
-    }
-    
-    private List<KosdaqStockDto.ListResponse> getListResponses() {
-        List<KosdaqStockList> kosdaqStockLists = kosdaqStockListRepository.findAll();
-        return kosdaqStockMapper.kosdaqStockListsToResponseDtos(kosdaqStockLists);
     }
 }
