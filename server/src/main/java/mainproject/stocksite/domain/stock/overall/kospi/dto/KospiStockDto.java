@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * FileName: KospiStockDto
  * Author: bangjaeyoung
  * Date: 2024-01-14
- * Description:
+ * Description: Redis Cache에 객체 형태로 저장 / API 응답 Dto
  */
 public class KospiStockDto {
     
@@ -18,7 +18,7 @@ public class KospiStockDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class IndexResponse {
+    public static class Index {
         private String basDt;
         private String idxNm;
         private String idxCsf;
@@ -46,7 +46,7 @@ public class KospiStockDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ListResponse {
+    public static class List {
         private String basDt;
         private String srtnCd;
         private String isinCd;

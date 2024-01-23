@@ -27,15 +27,15 @@ public class KosdaqStockController {
     
     // index: 주가지수시세
     @GetMapping("/index")
-    public ResponseEntity<List<KosdaqStockDto.IndexResponse>> getIndicesOfKosdaq() {
-        List<KosdaqStockDto.IndexResponse> response = kosdaqStockService.getKosdaqStockIndices();
+    public ResponseEntity<List<KosdaqStockDto.Index>> getIndicesOfKosdaq() {
+        List<KosdaqStockDto.Index> response = kosdaqStockService.getKosdaqStockIndices();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
     // list: 주식시세
     @GetMapping("/list")
-    public ResponseEntity<List<KosdaqStockDto.ListResponse>> getListsOfKosdaq() {
-        List<KosdaqStockDto.ListResponse> response = kosdaqStockService.getKosdaqStockLists();
+    public ResponseEntity<List<KosdaqStockDto.List>> getListsOfKosdaq() {
+        List<KosdaqStockDto.List> response = kosdaqStockService.getKosdaqStockLists();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

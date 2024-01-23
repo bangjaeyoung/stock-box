@@ -27,15 +27,15 @@ public class KospiStockController {
     
     // index: 주가지수시세
     @GetMapping("/index")
-    public ResponseEntity<List<KospiStockDto.IndexResponse>> getIndicesOfKospi() {
-        List<KospiStockDto.IndexResponse> response = kospiStockService.getKospiStockIndices();
+    public ResponseEntity<List<KospiStockDto.Index>> getIndicesOfKospi() {
+        List<KospiStockDto.Index> response = kospiStockService.getKospiStockIndices();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
     // list: 주식시세
     @GetMapping("/list")
-    public ResponseEntity<List<KospiStockDto.ListResponse>> getListsOfKospi() {
-        List<KospiStockDto.ListResponse> response = kospiStockService.getKospiStockLists();
+    public ResponseEntity<List<KospiStockDto.List>> getListsOfKospi() {
+        List<KospiStockDto.List> response = kospiStockService.getKospiStockLists();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
