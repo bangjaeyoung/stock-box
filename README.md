@@ -3,6 +3,10 @@
 >
 >주식에 입문하는 사용자들을 위해 구상한 서비스입니다.   
 >여러 국내 주식을 찾아보고, 모의투자를 통해 주식매매에 대한 감을 키울 수 있습니다.
+>
+>related repo)   
+>https://github.com/codestates-seb/seb41_main_032   
+>https://github.com/bangjaeyoung/stock-box-project   
 
 </br>
 
