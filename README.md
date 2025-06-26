@@ -9,19 +9,19 @@
 ## 1. 실제 서비스 화면
 
 ### ✔ 주식 전체 & 종목 TOP10 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/79b663d7-98a9-4cc2-956f-deded5041625"/>
+<img src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/79b663d7-98a9-4cc2-956f-deded5041625"/>
 
 ### ✔ 특정 종목 검색
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/da88b7fd-089a-484a-b072-a4010681d81f"/>
+<img src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/da88b7fd-089a-484a-b072-a4010681d81f"/>
 
 ### ✔ 주식 상세 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/709efb1e-f444-49d8-b879-1d1e8ead36ab"/>
+<img src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/709efb1e-f444-49d8-b879-1d1e8ead36ab"/>
 
 ### ✔ 나의 관심 종목 페이지(북마크)
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/3c4287c2-e621-4c76-bbe1-8bc6ec9373cb"/>
+<img src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/3c4287c2-e621-4c76-bbe1-8bc6ec9373cb"/>
 
 ### ✔ 나의 자산 관리 페이지
-<img src="https://github.com/bangjaeyoung/stock-box/assets/80241053/16be105d-7168-4ef2-88b9-ab9f2bb63af6"/>
+<img src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/16be105d-7168-4ef2-88b9-ab9f2bb63af6"/>
 
 </br>
 </br>
@@ -45,7 +45,7 @@
 </br>
 
 ## 4. ERD 설계
-<img width="977" alt="image" src="https://github.com/bangjaeyoung/stock-box/assets/80241053/fc655348-85cc-4609-8029-4861996170df">
+<img width="977" alt="image" src="https://github.com/bangjaeyoung/stock-box-project/assets/80241053/fc655348-85cc-4609-8029-4861996170df">
 
 
 </br>
@@ -56,7 +56,7 @@
 </br>
 
 ## 5. 사용자 요구사항 정의서
-<img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/1404474a-426a-4f3e-88cc-c15727a9edf8">
+<img src="https://github.com/bangjaeyoung/gyul-box-project/assets/80241053/1404474a-426a-4f3e-88cc-c15727a9edf8">
 
 </br>
 </br>
@@ -66,7 +66,7 @@
 </br>
 
 ## 6. 전체적인 흐름
-<img src="https://github.com/bangjaeyoung/gyul-box/assets/80241053/80f112f3-9ed0-44c2-943b-8c1a319b6552">
+<img src="https://github.com/bangjaeyoung/gyul-box-project/assets/80241053/80f112f3-9ed0-44c2-943b-8c1a319b6552">
 
 </br>
 </br>
